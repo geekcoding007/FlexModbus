@@ -1,131 +1,133 @@
 # FlexModbus
 
-Vrij configureerbare Modbus TCP-integratie voor Home Assistant. Geen vaste registerlijst per apparaat, zoals bij de meeste kant-en-klare Modbus-integraties — je stelt zelf in welke registers je wilt uitlezen (als sensor) of instellen (als number), met het datatype, de byte-volgorde, eenheid en schaling die bij jouw apparaat horen.
+*[Lees dit in het Nederlands](README.nl.md)*
 
-Gebouwd en uitgebreid tijdens het aansluiten van een SolarEdge- en een Solplanet-omvormer via Waveshare RS485-naar-Ethernet-gateways, maar niet aan die apparaten gebonden: alles is instelbaar.
+Freely configurable Modbus TCP integration for Home Assistant. No fixed register list per device, unlike most ready-made Modbus integrations — you define which registers to read (as a sensor) or set (as a number), with the data type, byte order, unit and scaling that match your device.
 
-## Kenmerken
+Built and extended while connecting a SolarEdge and a Solplanet inverter through Waveshare RS485-to-Ethernet gateways, but not tied to those devices: everything is configurable.
 
-- **Registers volledig zelf configureren** — geen vaste apparaatprofielen. Holding- en input-registers, met adres, slave-ID, datatype en byte-volgorde.
-- **Datatypes**: `uint16`, `int16`, `uint32`, `int32`, `float32`, en tekst (`string16` / `string32`, SunSpec-notatie: het aantal registers, dus resp. max. 32 en 64 tekens).
-- **Byte-volgorde**: ABCD (big endian), CDAB, BADC, DCBA (little endian) — voor 32-bit waarden.
-- **Sensor- én Number-entiteiten**: alleen-lezen waarden of schrijfbare instelwaarden (Number kan alleen op holding-registers).
-- **Entiteitscategorie**: normaal, diagnostiek of configuratie (dat laatste alleen voor Number).
-- **Waardenlijst voor statuscodes**: zet een ruwe code (bijvoorbeeld `0`, `1`, `2`) om naar leesbare tekst (`Wait`, `Normal`, `Fault`), als nette Home Assistant-enum-sensor met een keuzelijst van mogelijke statussen. Alleen voor Sensor; niet voor tekst- of float32-registers.
-- **Bitvlaggen voor foutstatusregisters (B16/B32)**: toon welke losse bits in één register actief zijn als leesbare, kommagescheiden tekst (bijvoorbeeld "Communicatiefout, Celspanning te hoog"). Alleen voor Sensor met `uint16`/`uint32`, niet te combineren met een waardenlijst op hetzelfde register.
-- **Importeren vanuit YAML**: zet sensoren uit de ingebouwde Home Assistant Modbus-integratie (`modbus:`-blok in `configuration.yaml`) in één keer om naar FlexModbus-registers, met een overzicht vooraf van wat wel en niet kan worden overgenomen.
-- **Twee verbindingstypen**: gewone Modbus TCP, of RTU-framing over TCP voor transparante seriële gateways.
-- **Eén centrale, gedeelde verbinding** per apparaat: alle registers worden in één ronde na elkaar uitgelezen, met een gedeelde connectie in plaats van dat elke entiteit los polt.
-- **Per apparaat instelbaar**: poll-interval, pauze tussen verzoeken, en hoe lang de verbinding na inactiviteit open blijft staan voordat hij zelf gesloten wordt.
-- **Robuuste foutafhandeling**: een los gemist antwoord houdt de laatste waarde vast (i.p.v. meteen "niet beschikbaar"); pas na een paar mislukkingen op rij wordt een entiteit onbeschikbaar. Antwoorden van een verkeerd slave-ID of met een verkeerd aantal registers (bijvoorbeeld door ander verkeer op dezelfde bus) worden herkend en genegeerd.
-- **Optioneel**: bekende, onschadelijke pymodbus-foutmeldingen (die ontstaan als een apparaat ongevraagd eigen verkeer op de lijn stuurt) uit het Home Assistant-log filteren.
-- Nederlandse en Engelse vertaling.
+## Features
 
-## Vereisten
+- **Fully self-configured registers** — no fixed device profiles. Holding and input registers, with address, slave ID, data type and byte order.
+- **Data types**: `uint16`, `int16`, `uint32`, `int32`, `float32`, and text (`string16` / `string32`, SunSpec notation: the number is the register count, so max. 32 and 64 characters respectively).
+- **Byte order**: ABCD (big endian), CDAB, BADC, DCBA (little endian) — for 32-bit values.
+- **Sensor and Number entities**: read-only values or writable setpoints (Number is limited to holding registers).
+- **Entity category**: normal, diagnostic, or config (the latter only for Number).
+- **Value list for status codes**: map a raw code (e.g. `0`, `1`, `2`) to readable text (`Wait`, `Normal`, `Fault`), rendered as a proper Home Assistant enum sensor with a dropdown of possible states. Sensor only; not for text or float32 registers.
+- **Bit flags for status/error registers (B16/B32)**: show which individual bits in a register are active as readable, comma-separated text (e.g. "Communication error, Cell voltage too high"). Sensor only, `uint16`/`uint32`, cannot be combined with a value list on the same register.
+- **Import from YAML**: convert sensors from Home Assistant's built-in Modbus integration (a `modbus:` block in `configuration.yaml`) into FlexModbus registers in one go, with a preview of what can and can't be carried over before anything is saved.
+- **Two connection types**: plain Modbus TCP, or RTU framing over TCP for transparent serial gateways.
+- **One shared connection per device**: all registers are read in a single round over one connection, instead of every entity polling independently.
+- **Configurable per device**: poll interval, delay between requests, and how long the connection stays open after inactivity before closing itself.
+- **Robust error handling**: a single missed response holds the last value (instead of immediately going "unavailable"); an entity only becomes unavailable after a few failures in a row. Responses with the wrong slave ID or the wrong register count (e.g. from other traffic on the same bus) are detected and ignored.
+- **Optional**: filter known, harmless pymodbus error messages (caused by a device sending unsolicited traffic on the line) out of the Home Assistant log.
+- Dutch and English translations.
 
-- Home Assistant 2024.8 of nieuwer (gebruikt `ConfigEntry.runtime_data` en de reconfigure-flow; ouder is niet getest).
-- `pymodbus` versie 3.8 of hoger. Voor de nieuwste `device_id`-parameter is 3.10+ nodig; op oudere versies valt de integratie automatisch terug op de oudere `slave`-parameter.
+## Requirements
 
-## Installatie
+- Home Assistant 2024.8 or newer (uses `ConfigEntry.runtime_data` and the reconfigure flow; older versions are untested).
+- `pymodbus` 3.8 or newer. The newer `device_id` parameter needs 3.10+; on older versions the integration automatically falls back to the older `slave` parameter.
 
-### Via HACS (aanbevolen)
+## Installation
 
-1. HACS → **Integraties** → menu (⋮) rechtsboven → **Aangepaste repositories**.
-2. Voeg deze repository-URL toe, categorie **Integratie**.
-3. Zoek naar "FlexModbus" en installeer.
-4. Herstart Home Assistant.
+### Via HACS (recommended)
 
-### Handmatig
+1. HACS → **Integrations** → menu (⋮) top right → **Custom repositories**.
+2. Add this repository's URL, category **Integration**.
+3. Search for "FlexModbus" and install.
+4. Restart Home Assistant.
 
-1. Kopieer de map `custom_components/flexmodbus` naar de `custom_components`-map van je Home Assistant-configuratie.
-2. Herstart Home Assistant.
+### Manual
 
-## Eerste apparaat toevoegen
+1. Copy the `custom_components/flexmodbus` folder into your Home Assistant configuration's `custom_components` folder.
+2. Restart Home Assistant.
 
-**Instellingen → Apparaten & diensten → Integratie toevoegen → FlexModbus.**
+## Adding your first device
 
-| Veld | Uitleg |
+**Settings → Devices & services → Add integration → FlexModbus.**
+
+| Field | Explanation |
 |---|---|
-| Naam | Vrije naam voor dit apparaat, bijvoorbeeld "Omvormer". |
-| IP-adres (host) | Adres van het apparaat of de RS485-naar-Ethernet-gateway. |
-| Poort | Meestal 502. |
-| Verbindingstype | **Modbus TCP**: het normale protocol, voor apparaten met een eigen netwerkaansluiting of een gateway in de modus "Modbus TCP to RTU". **RTU over TCP**: alleen voor een gateway die transparant doorgeeft (protocol "None"/"Transparent"), waarbij ruwe RTU-frames over de kale TCP-verbinding gaan. |
-| Poll-interval | Hoe vaak alle registers in één ronde worden uitgelezen (5-300 s, standaard 15 s). Hoger zetten bij een traag of instabiel apparaat. |
-| Pauze tussen verzoeken | Wachttijd op de bus tussen twee verzoeken (0-5000 ms, standaard 350 ms). Verhogen als een druk apparaat in de war raakt van snel achter elkaar pollen. |
-| Verbinding sluiten na inactiviteit | 0 = nooit automatisch sluiten (standaard, snelst). Hoger dan 0: de verbinding wordt na zoveel seconden inactiviteit gesloten en bij de volgende actie weer opgebouwd — een middenweg tussen altijd open (kwetsbaarder voor ongevraagd verkeer van het apparaat) en na elke ronde meteen dicht (meer overhead, kan pollen merkbaar vertragen bij een trage gateway). |
-| Bekende pymodbus-storingsmeldingen uit het log houden | Verbergt specifiek bekende, onschadelijke meldingen (zie hieronder bij Problemen oplossen). Geldt voor heel Home Assistant zolang minstens één apparaat dit aan heeft staan. |
+| Name | Free-form name for this device, e.g. "Inverter". |
+| IP address (host) | Address of the device or the RS485-to-Ethernet gateway. |
+| Port | Usually 502. |
+| Connection type | **Modbus TCP**: the standard protocol, for devices with their own network port or a gateway set to "Modbus TCP to RTU" mode. **RTU over TCP**: only for a gateway that passes data through transparently (protocol "None"/"Transparent"), where raw RTU frames travel over the bare TCP connection. |
+| Poll interval | How often all registers are read in one round (5-300 s, default 15 s). Increase for a slow or unstable device. |
+| Delay between requests | Wait time on the bus between two requests (0-5000 ms, default 350 ms). Increase if a busy device gets confused by polling too fast. |
+| Close connection after inactivity | 0 = never close automatically (default, fastest). Above 0: the connection closes after that many seconds of inactivity and reopens on the next action — a middle ground between always open (more exposed to unsolicited traffic from the device) and closing immediately after every round (more overhead, can noticeably slow polling with a slow gateway). |
+| Hide known pymodbus noise from the log | Hides specific, known, harmless messages (see Troubleshooting below). Applies Home Assistant-wide as long as at least one device has this enabled. |
 
-De verbinding wordt bij het opslaan getest; lukt dat niet, dan blijft het formulier openstaan met een foutmelding.
+The connection is tested when you save; if it fails, the form stays open with an error.
 
-## Registers beheren
+## Managing registers
 
-Ga naar de integratie → **Configureren** (het tandwiel-icoon) om registers toe te voegen, te bewerken of te verwijderen.
+Go to the integration → **Configure** (the gear icon) to add, edit or delete registers.
 
-| Veld | Uitleg |
+| Field | Explanation |
 |---|---|
-| Naam | Naam van de entiteit. |
-| Soort entiteit | Sensor (alleen lezen) of Number (schrijfbaar, alleen holding-registers). |
-| Categorie | Normaal, Diagnostiek, of Configuratie (alleen bij Number). |
-| Apparaatklasse | Bepaalt icoon en eenheid-conventie in Home Assistant (vermogen, energie, temperatuur, ...). |
-| Statusklasse | Voor sensoren: "Live meting" (schommelt) of "Totaal oplopend" (telt alleen op, voor energiemeters). |
-| Registertype | Holding of Input. Een Number kan alleen Holding zijn. |
-| Registernummer | Zoals in de handleiding van het apparaat — 1 is het eerste register (1-gebaseerd, niet 0-gebaseerd). |
-| Slave-/unit-ID | Het Modbus-adres van het apparaat op de bus (vaak 1). |
-| Datatype | Zie hierboven bij Kenmerken. Bij een tekst-type (`string16`/`string32`) vervallen byte-volgorde, vermenigvuldiger, offset, eenheid en klassen automatisch. |
-| Byte-volgorde | Alleen van belang bij 32-bit waarden (2 registers). Zie hieronder bij Problemen oplossen als een waarde er compleet naast zit. |
-| Eenheid | Bijvoorbeeld `W`, `kWh`, `°C`. Verplicht zodra er een apparaatklasse is gekozen die een eenheid vereist. |
-| Vermenigvuldiger / offset | Waarde = ruwe registerwaarde × vermenigvuldiger + offset. |
-| Minimum / maximum / stapgrootte | Alleen voor Number. |
-| Waardenlijst (optioneel) | Eén regel per code, in de vorm `code: label`, bijvoorbeeld:<br>`0: Wait`<br>`1: Normal`<br>`2: Fault`<br>`4: Checking`<br>Laat leeg voor een gewoon getal. Alleen bij Sensor, niet bij tekst- of float32-registers. Een code die niet in de lijst staat, wordt getoond als "Onbekend (code)". |
-| Bitvlaggen (optioneel) | Voor B16/B32-registers (losse aan/uit-vlaggen in één getal, zoals foutstatusregisters). Eén regel per bit, in de vorm `bitnummer: label`, bijvoorbeeld:<br>`0: Communicatiefout`<br>`1: Celspanning te hoog`<br>`3: Temperatuur te hoog`<br>Toont alle actieve bits, gescheiden door komma's ("Geen actieve vlaggen" als er geen actief zijn); een niet-benoemde actieve bit verschijnt als "bitN (onbekend)". Alleen bij Sensor met datatype `uint16` (bit 0-15) of `uint32` (bit 0-31), en niet samen met een waardenlijst op hetzelfde register. |
+| Name | Name of the entity. |
+| Entity type | Sensor (read-only) or Number (writable, holding registers only). |
+| Category | Normal, Diagnostic, or Configuration (Number only). |
+| Device class | Determines the icon and unit convention in Home Assistant (power, energy, temperature, ...). |
+| State class | For sensors: "Measurement" (fluctuates) or "Total increasing" (only counts up, for energy meters). |
+| Register type | Holding or Input. A Number can only be Holding. |
+| Register number | As in the device's manual — 1 is the first register (1-based, not 0-based). |
+| Slave/unit ID | The device's Modbus address on the bus (often 1). |
+| Data type | See Features above. For a text type (`string16`/`string32`), byte order, multiplier, offset, unit and classes are automatically dropped. |
+| Byte order | Only relevant for 32-bit values (2 registers). See Troubleshooting below if a value is completely off. |
+| Unit | E.g. `W`, `kWh`, `°C`. Required once a device class that needs a unit is selected. |
+| Multiplier / offset | Value = raw register value × multiplier + offset. |
+| Minimum / maximum / step | Number only. |
+| Value list (optional) | One line per code, formatted as `code: label`, e.g.:<br>`0: Wait`<br>`1: Normal`<br>`2: Fault`<br>`4: Checking`<br>Leave empty for a plain number. Sensor only, not for text or float32 registers. A code not in the list is shown as "Unknown (code)". |
+| Bit flags (optional) | For B16/B32 registers (individual on/off flags in one number, such as error status registers). One line per bit, formatted as `bit number: label`, e.g.:<br>`0: Communication error`<br>`1: Cell voltage too high`<br>`3: Temperature too high`<br>Shows all active bits, comma-separated ("No active flags" if none are set); an unlabeled active bit appears as "bitN (unknown)". Sensor only, data type `uint16` (bit 0-15) or `uint32` (bit 0-31), and cannot be combined with a value list on the same register. |
 
-Wijzigingen aan registers herladen de integratie automatisch.
+Changes to registers automatically reload the integration.
 
-## Verbinding wijzigen
+## Changing the connection
 
-Integratie → **⋮ → Opnieuw configureren** om host, poort, verbindingstype, poll-interval, pauze of het log-filter later aan te passen. Je registers blijven behouden.
+Integration → **⋮ → Reconfigure** to change the host, port, connection type, poll interval, delay or log filter later. Your registers are kept.
 
-## Importeren vanuit de ingebouwde Home Assistant Modbus-integratie
+## Importing from Home Assistant's built-in Modbus integration
 
-Heb je al een `modbus:`-blok in je `configuration.yaml`? Je kunt de sensoren daaruit importeren in plaats van ze allemaal opnieuw met de hand in te voeren.
+Already have a `modbus:` block in your `configuration.yaml`? You can import the sensors from it instead of entering them all by hand again.
 
-Integratie → **Configureren → Importeren vanuit YAML**. Plak het `modbus:`-blok (of alleen de relevante hub) en je krijgt eerst een overzicht te zien — wat wordt geïmporteerd, wat wordt overgeslagen en waarom — voordat er iets wordt opgeslagen.
+Integration → **Configure → Import from YAML**. Paste the `modbus:` block (or just the relevant hub) and you'll first see a preview — what will be imported, what will be skipped and why — before anything is saved.
 
-**Wat wordt omgezet:**
-- Sensoren met datatype `int16`, `uint16`, `int32`, `uint32`, `float32` of `float` (standaard `int16` als je niets opgeeft, zoals in de originele YAML).
-- `swap: word` → byte-volgorde CDAB, `swap: byte` → BADC, `swap: word_byte` → DCBA, geen `swap` → ABCD.
-- `scale` → vermenigvuldiger, `offset` → offset, `slave`/`device_address` → slave-ID. Het adres wordt automatisch met 1 opgehoogd (Home Assistant telt vanaf 0, FlexModbus vanaf 1).
-- Reeds bestaande registers (zelfde slave/adres/type) worden herkend en niet dubbel toegevoegd.
+**What gets converted:**
+- Sensors with data type `int16`, `uint16`, `int32`, `uint32`, `float32` or `float` (defaults to `int16` if unspecified, matching the original YAML).
+- `swap: word` → byte order CDAB, `swap: byte` → BADC, `swap: word_byte` → DCBA, no `swap` → ABCD.
+- `scale` → multiplier, `offset` → offset, `slave`/`device_address` → slave ID. The address is automatically increased by 1 (Home Assistant counts from 0, FlexModbus from 1).
+- Registers that already exist (same slave/address/type) are detected and not added twice.
 
-**Wat wordt overgeslagen** (met reden getoond in het overzicht):
-- 64-bit types (`int64`, `uint64`, `float64`), `string`/`custom`-registers met een variabel aantal registers.
-- `binary_sensors`, `switches`, `covers` en `climates` — deze zijn gebaseerd op coils, en FlexModbus werkt alleen met holding- en input-registers.
-- Een `count` die niet bij het datatype past.
-- `precision` wordt niet overgenomen (FlexModbus rondt altijd af op 3 decimalen); dit register wordt wel geïmporteerd, met een opmerking in het overzicht.
+**What gets skipped** (with the reason shown in the preview):
+- 64-bit types (`int64`, `uint64`, `float64`), `string`/`custom` registers with a variable register count.
+- `binary_sensors`, `switches`, `covers` and `climates` — these are based on coils, and FlexModbus only works with holding and input registers.
+- A `count` that doesn't match the data type.
+- `precision` is not carried over (FlexModbus always rounds to 3 decimals); the register is still imported, with a note in the preview.
 
-Deze importfunctie verandert niets aan je bestaande `configuration.yaml` — die kun je daarna zelf verwijderen als je volledig op FlexModbus overstapt.
+This import feature doesn't change your existing `configuration.yaml` — you can remove that yourself once you've fully switched to FlexModbus.
 
-## Problemen oplossen
+## Troubleshooting
 
-**Alle registers geven "geen antwoord".**
-Controleer in deze volgorde: het verbindingstype (Modbus TCP vs. RTU over TCP — dit is de meest voorkomende oorzaak), het slave-ID, en of de registeradressen kloppen (1-gebaseerd).
+**All registers return "no response".**
+Check, in this order: the connection type (Modbus TCP vs. RTU over TCP — this is the most common cause), the slave ID, and whether the register addresses are correct (1-based).
 
-**Eén specifieke 32-bit waarde is compleet fout, andere niet.**
-Vrijwel altijd de verkeerde byte-volgorde. Probeer de andere drie opties.
+**One specific 32-bit value is completely wrong, others aren't.**
+Almost always the wrong byte order. Try the other three options.
 
-**"request ask for id=X but got id=Y" / "Unable to decode frame" / "Fatal error: protocol.data_received() call failed" in het log.**
-Dit betekent dat er iets anders dan onze eigen verzoeken op dezelfde lijn verschijnt — bijvoorbeeld een omvormer die intern naar een niet-aangesloten meter zoekt, of een gateway met meerdere gelijktijdige clients (multi-host) aan. De integratie herkent en negeert deze vreemde antwoorden zelf al; je sensoren blijven gewoon bijgewerkt. Wil je dit niet in het log zien, zet dan bij het apparaat **"Bekende pymodbus-storingsmeldingen uit het log houden"** aan. Komt de melding heel vaak voor (elke paar seconden), zoek dan naar de bron: een instelling op het apparaat zelf die naar een niet-bestaande meter zoekt, of een gateway-instelling zoals "multi-host".
+**"request ask for id=X but got id=Y" / "Unable to decode frame" / "Fatal error: protocol.data_received() call failed" in the log.**
+This means something other than our own requests is appearing on the same line — for example an inverter searching internally for a meter that isn't connected, or a gateway with multiple simultaneous clients (multi-host) enabled. The integration already detects and ignores these stray responses itself; your sensors keep updating normally. If you don't want to see this in the log, enable **"Hide known pymodbus noise from the log"** on the device. If the message appears very frequently (every few seconds), look for the source: a setting on the device itself that searches for a non-existent meter, or a gateway setting such as "multi-host".
 
-**Metingen worden trager na het instellen van "verbinding sluiten na inactiviteit".**
-Bij een lage waarde (bijvoorbeeld 0-5 s) wordt de verbinding vrijwel elke pollronde opnieuw opgebouwd. Sommige gateways zijn daar traag mee. Zet de waarde hoger dan je poll-interval om de verbinding feitelijk continu open te houden, met alleen een vangnet voor langere periodes van stilte.
+**Measurements become slower after setting "close connection after inactivity".**
+At a low value (e.g. 0-5 s), the connection is rebuilt on almost every poll round. Some gateways are slow at this. Set the value higher than your poll interval to effectively keep the connection open continuously, with just a safety net for longer periods of silence.
 
-**pymodbus-versie ouder dan 3.10.**
-De integratie herkent dit automatisch en gebruikt dan de oudere `slave=`-parameter in plaats van `device_id=`. Geen actie nodig.
+**pymodbus version older than 3.10.**
+The integration detects this automatically and uses the older `slave=` parameter instead of `device_id=`. No action needed.
 
-## Bijdragen
+## Contributing
 
-Issues en pull requests zijn welkom via de issue tracker van deze repository.
+Issues and pull requests are welcome via this repository's issue tracker.
 
-## Licentie
+## License
 
-MIT — zie [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
