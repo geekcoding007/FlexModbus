@@ -1,0 +1,265 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Modbus TCP",
+        "description": "Name the device and enter the address of the device or gateway. You add registers afterwards through the options.",
+        "data": {
+          "name": "Device name",
+          "host": "IP address (host)",
+          "port": "Port",
+          "framer": "Connection type",
+          "scan_interval": "Poll interval",
+          "request_delay_ms": "Delay between requests",
+          "idle_close_seconds": "Close connection after inactivity",
+          "suppress_log_noise": "Hide known pymodbus noise from the log"
+        },
+        "data_description": {
+          "framer": "If your RS485 converter (Waveshare, USR, Elfin, ...) is set to protocol 'Modbus TCP to RTU', choose Modbus TCP. Choose 'RTU over TCP' only if the converter passes data through transparently (protocol 'None'/'Transparent'). Devices with their own network port use Modbus TCP.",
+          "scan_interval": "How often all registers are read in one round (5-300 s). Default 15 s. If a device reacts slowly or is unstable, increase this.",
+          "request_delay_ms": "Wait time on the bus between two requests (0-5000 ms). Default 350 ms. Some devices (especially busy hybrid inverters) get confused by polling too fast; increase this if you see odd values or errors around polling times.",
+          "idle_close_seconds": "Seconds of inactivity before the connection closes itself (0-300). Default 0 = never close automatically; the connection stays open continuously (fastest, current behaviour). Set this to e.g. 5 if you occasionally see 'Unable to decode request' errors in the log for this device: the connection then only closes after 5 seconds of no activity, and reopens automatically on the next action. This gives less exposure to unsolicited traffic from the device than always keeping it open, with less overhead than closing immediately after every round.",
+          "suppress_log_noise": "Only hides known, harmless messages that pymodbus logs when a device sends unsolicited traffic on the line (such as 'request ask for id=3 but got id=1', 'Unable to decode frame' and 'Fatal error: protocol.data_received() call failed'). All other messages stay visible. Note: the filter applies to all of Home Assistant, including other Modbus integrations. The integration itself keeps reporting failures per register."
+        }
+      },
+      "reconfigure": {
+        "title": "Change connection",
+        "description": "Change the address, port or connection type. Your registers are kept.",
+        "data": {
+          "host": "IP address (host)",
+          "port": "Port",
+          "framer": "Connection type",
+          "scan_interval": "Poll interval",
+          "request_delay_ms": "Delay between requests",
+          "idle_close_seconds": "Close connection after inactivity",
+          "suppress_log_noise": "Hide known pymodbus noise from the log"
+        },
+        "data_description": {
+          "framer": "If your RS485 converter (Waveshare, USR, Elfin, ...) is set to protocol 'Modbus TCP to RTU', choose Modbus TCP. Choose 'RTU over TCP' only if the converter passes data through transparently (protocol 'None'/'Transparent'). Devices with their own network port use Modbus TCP.",
+          "scan_interval": "How often all registers are read in one round (5-300 s). Default 15 s. If a device reacts slowly or is unstable, increase this.",
+          "request_delay_ms": "Wait time on the bus between two requests (0-5000 ms). Default 350 ms. Some devices (especially busy hybrid inverters) get confused by polling too fast; increase this if you see odd values or errors around polling times.",
+          "idle_close_seconds": "Seconds of inactivity before the connection closes itself (0-300). Default 0 = never close automatically; the connection stays open continuously (fastest, current behaviour). Set this to e.g. 5 if you occasionally see 'Unable to decode request' errors in the log for this device: the connection then only closes after 5 seconds of no activity, and reopens automatically on the next action. This gives less exposure to unsolicited traffic from the device than always keeping it open, with less overhead than closing immediately after every round.",
+          "suppress_log_noise": "Only hides known, harmless messages that pymodbus logs when a device sends unsolicited traffic on the line (such as 'request ask for id=3 but got id=1', 'Unable to decode frame' and 'Fatal error: protocol.data_received() call failed'). All other messages stay visible. Note: the filter applies to all of Home Assistant, including other Modbus integrations. The integration itself keeps reporting failures per register."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect. Check the IP address, the port and that the device is powered on.",
+      "name_required": "Enter a name."
+    },
+    "abort": {
+      "already_configured": "This host and port are already configured.",
+      "reconfigure_successful": "The connection has been updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Manage Modbus registers",
+        "description": "What do you want to do with the registers?",
+        "menu_options": {
+          "add_register": "Add a new register",
+          "select_edit": "Edit an existing register",
+          "select_delete": "Delete a register",
+          "import_yaml": "Import from YAML"
+        }
+      },
+      "add_register": {
+        "title": "Add a new register",
+        "data": {
+          "name": "Name",
+          "entity_type": "Entity type",
+          "device_class": "Device class",
+          "state_class": "State class",
+          "register_type": "Register type",
+          "address": "Register number",
+          "slave": "Slave / unit ID",
+          "data_type": "Data type",
+          "byte_order": "Byte order",
+          "unit_of_measurement": "Unit (e.g. °C, kWh, W)",
+          "multiplier": "Multiplier",
+          "offset": "Offset",
+          "min_value": "Minimum (Number only)",
+          "max_value": "Maximum (Number only)",
+          "step_value": "Step size (Number only)",
+          "entity_category": "Category",
+          "value_map": "Value list (optional)",
+          "bit_labels": "Bit flags (optional)"
+        },
+        "data_description": {
+          "address": "As in the device manual: 1 is the first register.",
+          "slave": "The Modbus address of the device (often 1).",
+          "byte_order": "Only relevant for 32-bit values (2 registers).",
+          "multiplier": "Value = raw value × multiplier + offset.",
+          "register_type": "A Number can only be a Holding register.",
+          "data_type": "For text, byte order, multiplier, offset, unit and classes do not apply.",
+          "entity_category": "Diagnostic and configuration entities are shown in their own group on the device page and are not added to dashboards automatically. 'Configuration' is only available for a Number.",
+          "value_map": "Map raw register codes to readable text, e.g. for a status register. One line per code, formatted as 'code: label', for example:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLeave empty for a plain number. Only available for Sensor (not Number), and not for text or float32 registers. A code not in the list is shown as 'Unknown (code)'.",
+          "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list."
+        }
+      },
+      "select_edit": {
+        "title": "Choose a register",
+        "data": {
+          "register_index": "Register"
+        }
+      },
+      "edit_register": {
+        "title": "Edit register",
+        "data": {
+          "name": "Name",
+          "entity_type": "Entity type",
+          "device_class": "Device class",
+          "state_class": "State class",
+          "register_type": "Register type",
+          "address": "Register number",
+          "slave": "Slave / unit ID",
+          "data_type": "Data type",
+          "byte_order": "Byte order",
+          "unit_of_measurement": "Unit (e.g. °C, kWh, W)",
+          "multiplier": "Multiplier",
+          "offset": "Offset",
+          "min_value": "Minimum (Number only)",
+          "max_value": "Maximum (Number only)",
+          "step_value": "Step size (Number only)",
+          "entity_category": "Category",
+          "value_map": "Value list (optional)",
+          "bit_labels": "Bit flags (optional)"
+        },
+        "data_description": {
+          "address": "As in the device manual: 1 is the first register.",
+          "slave": "The Modbus address of the device (often 1).",
+          "byte_order": "Only relevant for 32-bit values (2 registers).",
+          "multiplier": "Value = raw value × multiplier + offset.",
+          "register_type": "A Number can only be a Holding register.",
+          "data_type": "For text, byte order, multiplier, offset, unit and classes do not apply.",
+          "entity_category": "Diagnostic and configuration entities are shown in their own group on the device page and are not added to dashboards automatically. 'Configuration' is only available for a Number.",
+          "value_map": "Map raw register codes to readable text, e.g. for a status register. One line per code, formatted as 'code: label', for example:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLeave empty for a plain number. Only available for Sensor (not Number), and not for text or float32 registers. A code not in the list is shown as 'Unknown (code)'.",
+          "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list."
+        }
+      },
+      "select_delete": {
+        "title": "Delete a register",
+        "data": {
+          "register_index": "Register"
+        }
+      },
+      "import_yaml": {
+        "title": "Import from Home Assistant Modbus YAML",
+        "description": "Paste the 'modbus:' block from your configuration.yaml here (or just the relevant hub). Only sensors with data type int16, uint16, int32, uint32, float32 or float are converted; 64-bit types, text/custom registers and coil-based entities (binary_sensor, switch, cover, climate) are skipped and listed separately. You'll see a summary before anything is saved.",
+        "data": {
+          "yaml_text": "YAML"
+        }
+      },
+      "import_confirm": {
+        "title": "Import summary",
+        "description": "{summary}",
+        "data": {
+          "confirm": "Import"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Enter a name.",
+      "invalid_multiplier": "The multiplier cannot be 0.",
+      "input_not_writable": "A Number cannot write to an Input register; choose Holding register.",
+      "min_max": "The minimum must be lower than the maximum.",
+      "unit_required": "This device class needs a unit (e.g. W, kWh, °C).",
+      "duplicate_register": "A register with the same slave, register type and number already exists.",
+      "slave_broadcast": "Slave ID 0 is the broadcast address; devices do not answer it. Use e.g. 1.",
+      "string_not_number": "A text register is read-only and cannot be a Number; choose Sensor.",
+      "config_not_for_sensor": "A sensor cannot be in the Configuration category; choose Normal or Diagnostic.",
+      "value_map_format": "Each line must be formatted as 'code: label', with a whole number as the code.",
+      "value_map_duplicate": "The same code appears more than once in the value list.",
+      "value_map_not_number": "A register with a value list cannot be a Number; choose Sensor.",
+      "value_map_unsupported_datatype": "A value list is not possible for text or float32 registers.",
+      "bit_labels_format": "Each line must be formatted as 'bit number: label', with a non-negative whole number as the bit number.",
+      "bit_labels_duplicate": "The same bit number appears more than once.",
+      "bit_labels_not_number": "A register with bit flags cannot be a Number; choose Sensor.",
+      "bit_labels_unsupported_datatype": "Bit flags are only possible with data type uint16 or uint32.",
+      "bit_labels_and_value_map": "A value list and bit flags cannot both be used on the same register.",
+      "bit_labels_out_of_range": "Bit number must be between 0-15 (uint16) or 0-31 (uint32).",
+      "yaml_invalid": "Could not parse this YAML: {yaml_error}"
+    },
+    "abort": {
+      "no_registers": "No registers have been configured yet.",
+      "import_cancelled": "Import cancelled, nothing was saved.",
+      "import_nothing_new": "Everything in this YAML is already in your registers; nothing new was added."
+    }
+  },
+  "selector": {
+    "entity_type": {
+      "options": {
+        "sensor": "Read-only (Sensor)",
+        "number": "Adjustable input (Number)"
+      }
+    },
+    "register_type": {
+      "options": {
+        "holding": "Holding register",
+        "input": "Input register (sensors only)"
+      }
+    },
+    "data_type": {
+      "options": {
+        "uint16": "16-bit unsigned integer (1 register)",
+        "int16": "16-bit signed integer (1 register)",
+        "uint32": "32-bit unsigned integer (2 registers)",
+        "int32": "32-bit signed integer (2 registers)",
+        "float32": "32-bit floating point (2 registers)",
+        "string16": "Text / String(16): 16 registers, max. 32 characters",
+        "string32": "Text / String(32): 32 registers, max. 64 characters"
+      }
+    },
+    "byte_order": {
+      "options": {
+        "abcd": "Big endian (ABCD)",
+        "cdab": "Word swapped (CDAB)",
+        "badc": "Byte swapped (BADC)",
+        "dcba": "Little endian (DCBA)"
+      }
+    },
+    "device_class": {
+      "options": {
+        "none": "None (default)",
+        "apparent_power": "Apparent power (VA)",
+        "battery": "Battery (%)",
+        "current": "Current (A)",
+        "data_size": "Data size (kB/MB)",
+        "duration": "Duration (s/min/h)",
+        "energy": "Energy (Wh/kWh)",
+        "energy_storage": "Stored energy (Wh/kWh)",
+        "frequency": "Frequency (Hz)",
+        "gas": "Gas (m³)",
+        "humidity": "Humidity (%)",
+        "power": "Power (W/kW)",
+        "power_factor": "Power factor",
+        "pressure": "Pressure (bar/hPa)",
+        "reactive_power": "Reactive power (var)",
+        "temperature": "Temperature (°C/°F)",
+        "voltage": "Voltage (V)",
+        "water": "Water (m³/L)"
+      }
+    },
+    "state_class": {
+      "options": {
+        "none": "None (default)",
+        "measurement": "Measurement (fluctuates, e.g. temperature/watt)",
+        "total_increasing": "Total increasing (counter that only rises, e.g. kWh/m³)"
+      }
+    },
+    "framer": {
+      "options": {
+        "socket": "Modbus TCP (default)",
+        "rtu": "RTU over TCP (serial gateway)"
+      }
+    },
+    "entity_category": {
+      "options": {
+        "none": "Normal",
+        "diagnostic": "Diagnostic",
+        "config": "Configuration (Number only)"
+      }
+    }
+  }
+}
