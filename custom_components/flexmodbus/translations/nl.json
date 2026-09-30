@@ -84,7 +84,9 @@
           "step_value": "Stapgrootte (alleen Number)",
           "entity_category": "Categorie",
           "value_map": "Waardenlijst (optioneel)",
-          "bit_labels": "Bitvlaggen (optioneel)"
+          "bit_labels": "Bitvlaggen (optioneel)",
+          "on_value": "Aan-waarde",
+          "off_value": "Uit-waarde"
         },
         "data_description": {
           "address": "Zoals in de handleiding van het apparaat: 1 is het eerste register.",
@@ -95,7 +97,9 @@
           "data_type": "Bij tekst gelden byte-volgorde, vermenigvuldiger, offset, eenheid en klassen niet.",
           "entity_category": "Diagnostiek- en configuratie-entiteiten staan op de apparaatpagina in een eigen groep en worden niet automatisch op dashboards getoond. 'Configuratie' kan alleen bij een Number.",
           "value_map": "Zet ruwe registercodes om naar leesbare tekst, bijvoorbeeld voor een statusregister. Eén regel per code, in de vorm 'code: label', bijvoorbeeld:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLaat leeg voor een gewoon getal. Alleen mogelijk bij Sensor (niet Number) en niet bij tekst- of float32-registers. Een code die niet in de lijst staat, wordt getoond als 'Onbekend (code)'.",
-          "bit_labels": "Zet losse bits in een B16/B32-register om naar leesbare namen, bijvoorbeeld voor een foutstatusregister. Eén regel per bit, in de vorm 'bitnummer: label', bijvoorbeeld:\n0: Communicatiefout\n1: Celspanning te hoog\n3: Temperatuur te hoog\nAlle actieve (op 1 staande) bits worden getoond, gescheiden door komma's; een niet-benoemde actieve bit verschijnt als 'bitN (onbekend)'. Staat geen enkele bit aan, dan toont de sensor 'Geen actieve vlaggen'. Alleen bij Sensor met datatype uint16 (bits 0-15) of uint32 (bits 0-31), en niet te combineren met een waardenlijst."
+          "bit_labels": "Zet losse bits in een B16/B32-register om naar leesbare namen, bijvoorbeeld voor een foutstatusregister. Eén regel per bit, in de vorm 'bitnummer: label', bijvoorbeeld:\n0: Communicatiefout\n1: Celspanning te hoog\n3: Temperatuur te hoog\nAlle actieve (op 1 staande) bits worden getoond, gescheiden door komma's; een niet-benoemde actieve bit verschijnt als 'bitN (onbekend)'. Staat geen enkele bit aan, dan toont de sensor 'Geen actieve vlaggen'. Alleen bij Sensor met datatype uint16 (bits 0-15) of uint32 (bits 0-31), en niet te combineren met een waardenlijst.",
+          "on_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
+          "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005)."
         }
       },
       "select_edit": {
@@ -124,7 +128,9 @@
           "step_value": "Stapgrootte (alleen Number)",
           "entity_category": "Categorie",
           "value_map": "Waardenlijst (optioneel)",
-          "bit_labels": "Bitvlaggen (optioneel)"
+          "bit_labels": "Bitvlaggen (optioneel)",
+          "on_value": "Aan-waarde",
+          "off_value": "Uit-waarde"
         },
         "data_description": {
           "address": "Zoals in de handleiding van het apparaat: 1 is het eerste register.",
@@ -135,7 +141,9 @@
           "data_type": "Bij tekst gelden byte-volgorde, vermenigvuldiger, offset, eenheid en klassen niet.",
           "entity_category": "Diagnostiek- en configuratie-entiteiten staan op de apparaatpagina in een eigen groep en worden niet automatisch op dashboards getoond. 'Configuratie' kan alleen bij een Number.",
           "value_map": "Zet ruwe registercodes om naar leesbare tekst, bijvoorbeeld voor een statusregister. Eén regel per code, in de vorm 'code: label', bijvoorbeeld:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLaat leeg voor een gewoon getal. Alleen mogelijk bij Sensor (niet Number) en niet bij tekst- of float32-registers. Een code die niet in de lijst staat, wordt getoond als 'Onbekend (code)'.",
-          "bit_labels": "Zet losse bits in een B16/B32-register om naar leesbare namen, bijvoorbeeld voor een foutstatusregister. Eén regel per bit, in de vorm 'bitnummer: label', bijvoorbeeld:\n0: Communicatiefout\n1: Celspanning te hoog\n3: Temperatuur te hoog\nAlle actieve (op 1 staande) bits worden getoond, gescheiden door komma's; een niet-benoemde actieve bit verschijnt als 'bitN (onbekend)'. Staat geen enkele bit aan, dan toont de sensor 'Geen actieve vlaggen'. Alleen bij Sensor met datatype uint16 (bits 0-15) of uint32 (bits 0-31), en niet te combineren met een waardenlijst."
+          "bit_labels": "Zet losse bits in een B16/B32-register om naar leesbare namen, bijvoorbeeld voor een foutstatusregister. Eén regel per bit, in de vorm 'bitnummer: label', bijvoorbeeld:\n0: Communicatiefout\n1: Celspanning te hoog\n3: Temperatuur te hoog\nAlle actieve (op 1 staande) bits worden getoond, gescheiden door komma's; een niet-benoemde actieve bit verschijnt als 'bitN (onbekend)'. Staat geen enkele bit aan, dan toont de sensor 'Geen actieve vlaggen'. Alleen bij Sensor met datatype uint16 (bits 0-15) of uint32 (bits 0-31), en niet te combineren met een waardenlijst.",
+          "on_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
+          "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005)."
         }
       },
       "select_delete": {
@@ -167,19 +175,21 @@
       "unit_required": "Bij deze apparaatklasse hoort een eenheid (bijv. W, kWh, °C).",
       "duplicate_register": "Er bestaat al een register met dezelfde slave, registertype en nummer.",
       "slave_broadcast": "Slave-ID 0 is het broadcast-adres; apparaten antwoorden daar niet op. Gebruik bijvoorbeeld 1.",
-      "string_not_number": "Een tekstregister is alleen-lezen en kan dus geen Number zijn; kies Sensor.",
+      "string_not_number": "Een tekstregister kan geen Number of Switch zijn; kies Sensor.",
       "config_not_for_sensor": "Een sensor kan niet in de categorie Configuratie vallen; kies Normaal of Diagnostiek.",
       "value_map_format": "Elke regel moet de vorm 'code: label' hebben, met een geheel getal als code.",
       "value_map_duplicate": "Dezelfde code komt meerdere keren voor in de waardenlijst.",
-      "value_map_not_number": "Een register met een waardenlijst kan geen Number zijn; kies Sensor.",
+      "value_map_not_number": "Een register met een waardenlijst kan geen Number of Switch zijn; kies Sensor.",
       "value_map_unsupported_datatype": "Een waardenlijst is niet mogelijk bij tekst- of float32-registers.",
       "bit_labels_format": "Elke regel moet de vorm 'bitnummer: label' hebben, met een niet-negatief geheel getal als bitnummer.",
       "bit_labels_duplicate": "Hetzelfde bitnummer komt meerdere keren voor.",
-      "bit_labels_not_number": "Een register met bitvlaggen kan geen Number zijn; kies Sensor.",
+      "bit_labels_not_number": "Een register met bitvlaggen kan geen Number of Switch zijn; kies Sensor.",
       "bit_labels_unsupported_datatype": "Bitvlaggen zijn alleen mogelijk bij datatype uint16 of uint32.",
       "bit_labels_and_value_map": "Een waardenlijst en bitvlaggen kunnen niet samen op één register.",
       "bit_labels_out_of_range": "Bitnummer moet tussen 0-15 (uint16) of 0-31 (uint32) liggen.",
-      "yaml_invalid": "Kan deze YAML niet lezen: {yaml_error}"
+      "yaml_invalid": "Kan deze YAML niet lezen: {yaml_error}",
+      "float32_not_switch": "Een Switch is niet mogelijk bij datatype float32.",
+      "on_off_must_differ": "De aan- en uit-waarde moeten van elkaar verschillen."
     },
     "abort": {
       "no_registers": "Er zijn nog geen registers ingesteld.",
@@ -191,7 +201,8 @@
     "entity_type": {
       "options": {
         "sensor": "Alleen uitlezen (Sensor)",
-        "number": "Instelbaar invoerveld (Number)"
+        "number": "Instelbaar invoerveld (Number)",
+        "switch": "Schakelaar (Switch)"
       }
     },
     "register_type": {
