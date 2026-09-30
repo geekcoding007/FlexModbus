@@ -10,7 +10,7 @@ from .const import CONF_FRAMER, CONF_SUPPRESS_LOG_NOISE, FRAMER_RTU
 from .coordinator import ModbusConfigEntry, ModbusCoordinator
 from .register import RegisterDef, parse_registers
 
-PLATFORMS = [Platform.SENSOR, Platform.NUMBER]
+PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SWITCH]
 
 def _remove_stale_entities(hass: HomeAssistant, entry: ModbusConfigEntry, registers: list[RegisterDef]) -> None:
     active = {reg.unique_id for reg in registers}

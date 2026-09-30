@@ -24,9 +24,12 @@ from .const import (
     CONF_STEP,
     CONF_VALUE_MAP,
     CONF_BIT_LABELS,
+    CONF_ON_VALUE,
+    CONF_OFF_VALUE,
     ENTITY_CATEGORIES,
     ENTITY_NUMBER,
     ENTITY_SENSOR,
+    ENTITY_SWITCH,
     LEGACY_BYTE_ORDERS,
     REG_HOLDING,
     REGISTER_TYPES,
@@ -121,6 +124,8 @@ class RegisterDef:
     entity_category: str | None
     value_map: dict[int, str] | None
     bit_labels: dict[int, str] | None
+    on_value: int
+    off_value: int
     min_value: float
     max_value: float
     step: float
@@ -140,6 +145,10 @@ class RegisterDef:
     @property
     def is_bitfield(self) -> bool:
         return bool(self.bit_labels)
+
+    @property
+    def is_switch(self) -> bool:
+        return self.entity_type == ENTITY_SWITCH
 
     def to_value(self, raw: int | float | str) -> float | str | None:
         if isinstance(raw, str):
@@ -170,7 +179,7 @@ def _none_if_empty(value: Any) -> str | None:
 
 def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
     entity_type = reg.get(CONF_ENT_TYPE, ENTITY_SENSOR)
-    if entity_type not in (ENTITY_SENSOR, ENTITY_NUMBER):
+    if entity_type not in (ENTITY_SENSOR, ENTITY_NUMBER, ENTITY_SWITCH):
         entity_type = ENTITY_SENSOR
 
     address = int(reg[CONF_REG_ADDRESS])
@@ -178,9 +187,10 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         raise ValueError("registeradres moet minimaal 1 zijn")
     slave = int(reg[CONF_REG_SLAVE])
 
-    if entity_type == ENTITY_NUMBER:
+    if entity_type in (ENTITY_NUMBER, ENTITY_SWITCH):
         register_type = REG_HOLDING
-        unique_id = f"modbus_num_{entry_id}_{slave}_{address}"
+        prefix = "num" if entity_type == ENTITY_NUMBER else "switch"
+        unique_id = f"modbus_{prefix}_{entry_id}_{slave}_{address}"
     else:
         register_type = reg.get(CONF_REG_TYPE, REG_HOLDING)
         if register_type not in REGISTER_TYPES:
@@ -191,22 +201,22 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
     if data_type not in _FORMATS and data_type not in _STRING_TYPES:
         data_type = "uint16"
     is_text = data_type in _STRING_TYPES
-    if is_text and entity_type == ENTITY_NUMBER:
-        raise ValueError("een tekstregister kan geen Number zijn")
+    if is_text and entity_type in (ENTITY_NUMBER, ENTITY_SWITCH):
+        raise ValueError("een tekstregister kan geen Number of Switch zijn")
 
     raw_value_map = reg.get(CONF_VALUE_MAP) or {}
     value_map: dict[int, str] | None = {int(k): str(v) for k, v in raw_value_map.items()} or None
     if value_map:
-        if entity_type == ENTITY_NUMBER:
-            raise ValueError("een register met een waardenlijst kan geen Number zijn")
+        if entity_type in (ENTITY_NUMBER, ENTITY_SWITCH):
+            raise ValueError("een register met een waardenlijst kan geen Number of Switch zijn")
         if is_text or data_type == "float32":
             raise ValueError("een waardenlijst is niet mogelijk bij tekst of float32")
 
     raw_bit_labels = reg.get(CONF_BIT_LABELS) or {}
     bit_labels: dict[int, str] | None = {int(k): str(v) for k, v in raw_bit_labels.items()} or None
     if bit_labels:
-        if entity_type == ENTITY_NUMBER:
-            raise ValueError("een register met bitvlaggen kan geen Number zijn")
+        if entity_type in (ENTITY_NUMBER, ENTITY_SWITCH):
+            raise ValueError("een register met bitvlaggen kan geen Number of Switch zijn")
         if data_type not in ("uint16", "uint32"):
             raise ValueError("bitvlaggen zijn alleen mogelijk bij uint16 of uint32")
         if value_map:
@@ -214,6 +224,14 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         width = 32 if data_type == "uint32" else 16
         if any(not (0 <= bit < width) for bit in bit_labels):
             raise ValueError(f"bitnummer moet tussen 0 en {width - 1} liggen voor {data_type}")
+
+    on_value = int(reg.get(CONF_ON_VALUE, 1))
+    off_value = int(reg.get(CONF_OFF_VALUE, 0))
+    if entity_type == ENTITY_SWITCH:
+        if is_text or data_type == "float32":
+            raise ValueError("een Switch is niet mogelijk bij tekst of float32")
+        if on_value == off_value:
+            raise ValueError("de aan- en uit-waarde van een Switch moeten verschillend zijn")
 
     multiplier = float(reg.get(CONF_MULTIPLIER, 1.0)) or 1.0
 
@@ -240,6 +258,8 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         entity_category=category,
         value_map=value_map,
         bit_labels=bit_labels,
+        on_value=on_value,
+        off_value=off_value,
         min_value=float(reg.get(CONF_MIN, 0.0)),
         max_value=float(reg.get(CONF_MAX, 100.0)),
         step=float(reg.get(CONF_STEP, 1.0)) or 1.0,

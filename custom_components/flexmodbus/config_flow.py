@@ -43,6 +43,8 @@ from .const import (
     CONF_MIN,
     CONF_MULTIPLIER,
     CONF_OFFSET,
+    CONF_ON_VALUE,
+    CONF_OFF_VALUE,
     CONF_REG_ADDRESS,
     CONF_REG_SLAVE,
     CONF_REG_TYPE,
@@ -61,6 +63,7 @@ from .const import (
     DEVICE_CLASSES_WITHOUT_UNIT,
     DOMAIN,
     ENTITY_NUMBER,
+    ENTITY_SWITCH,
     ENTITY_SENSOR,
     ENTITY_CATEGORIES,
     ENTITY_TYPES,
@@ -339,6 +342,12 @@ def _register_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(CONF_MIN, default=d.get(CONF_MIN, 0.0)): vol.Coerce(float),
             vol.Required(CONF_MAX, default=d.get(CONF_MAX, 100.0)): vol.Coerce(float),
             vol.Required(CONF_STEP, default=d.get(CONF_STEP, 1.0)): vol.Coerce(float),
+            vol.Required(CONF_ON_VALUE, default=d.get(CONF_ON_VALUE, 1)): NumberSelector(
+                NumberSelectorConfig(min=-2147483648, max=4294967295, step=1, mode=NumberSelectorMode.BOX)
+            ),
+            vol.Required(CONF_OFF_VALUE, default=d.get(CONF_OFF_VALUE, 0)): NumberSelector(
+                NumberSelectorConfig(min=-2147483648, max=4294967295, step=1, mode=NumberSelectorMode.BOX)
+            ),
             vol.Optional(
                 CONF_VALUE_MAP, default=_format_value_map(d.get(CONF_VALUE_MAP))
             ): TextSelector(TextSelectorConfig(multiline=True, type=TextSelectorType.TEXT)),
@@ -355,8 +364,16 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     reg[CONF_BYTE_ORDER] = normalize_byte_order(reg.get(CONF_BYTE_ORDER))
     reg[CONF_REG_SLAVE] = int(reg[CONF_REG_SLAVE])
     reg[CONF_REG_ADDRESS] = int(reg[CONF_REG_ADDRESS])
-    if reg[CONF_ENT_TYPE] == ENTITY_NUMBER:
+    if reg[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
         reg[CONF_REG_TYPE] = REG_HOLDING
+    if reg[CONF_ENT_TYPE] == ENTITY_SWITCH:
+        reg[CONF_MULTIPLIER] = 1.0
+        reg[CONF_OFFSET] = 0.0
+        reg[CONF_DEVICE_CLASS] = "none"
+        reg[CONF_STATE_CLASS] = "none"
+        reg[CONF_UNIT_OF_MEASUREMENT] = ""
+        reg[CONF_ON_VALUE] = int(reg.get(CONF_ON_VALUE, 1))
+        reg[CONF_OFF_VALUE] = int(reg.get(CONF_OFF_VALUE, 0))
     if is_string_type(reg[CONF_DATA_TYPE]):
         reg[CONF_DEVICE_CLASS] = "none"
         reg[CONF_STATE_CLASS] = "none"
@@ -386,14 +403,16 @@ def _validate(
     if not user_input[CONF_NAME].strip():
         errors[CONF_NAME] = "name_required"
     is_text = is_string_type(user_input[CONF_DATA_TYPE])
-    if is_text and user_input[CONF_ENT_TYPE] == ENTITY_NUMBER:
+    if is_text and user_input[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
         errors[CONF_DATA_TYPE] = "string_not_number"
+    elif user_input[CONF_ENT_TYPE] == ENTITY_SWITCH and user_input[CONF_DATA_TYPE] == "float32":
+        errors[CONF_DATA_TYPE] = "float32_not_switch"
 
     value_map, value_map_error = _parse_value_map(user_input.get(CONF_VALUE_MAP, ""))
     if value_map_error:
         errors[CONF_VALUE_MAP] = value_map_error
     elif value_map:
-        if user_input[CONF_ENT_TYPE] == ENTITY_NUMBER:
+        if user_input[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
             errors[CONF_VALUE_MAP] = "value_map_not_number"
         elif is_text or user_input[CONF_DATA_TYPE] == "float32":
             errors[CONF_VALUE_MAP] = "value_map_unsupported_datatype"
@@ -402,7 +421,7 @@ def _validate(
     if bit_labels_error:
         errors[CONF_BIT_LABELS] = bit_labels_error
     elif bit_labels:
-        if user_input[CONF_ENT_TYPE] == ENTITY_NUMBER:
+        if user_input[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
             errors[CONF_BIT_LABELS] = "bit_labels_not_number"
         elif user_input[CONF_DATA_TYPE] not in ("uint16", "uint32"):
             errors[CONF_BIT_LABELS] = "bit_labels_unsupported_datatype"
@@ -423,10 +442,16 @@ def _validate(
             errors[CONF_REG_TYPE] = "input_not_writable"
         if user_input[CONF_MIN] >= user_input[CONF_MAX]:
             errors[CONF_MAX] = "min_max"
+    if user_input[CONF_ENT_TYPE] == ENTITY_SWITCH:
+        if user_input[CONF_REG_TYPE] == REG_INPUT:
+            errors[CONF_REG_TYPE] = "input_not_writable"
+        if int(user_input[CONF_ON_VALUE]) == int(user_input[CONF_OFF_VALUE]):
+            errors[CONF_OFF_VALUE] = "on_off_must_differ"
     if (
         not is_text
         and not value_map
         and not bit_labels
+        and user_input[CONF_ENT_TYPE] != ENTITY_SWITCH
         and user_input[CONF_DEVICE_CLASS] not in DEVICE_CLASSES_WITHOUT_UNIT
         and not (user_input.get(CONF_UNIT_OF_MEASUREMENT) or "").strip()
     ):

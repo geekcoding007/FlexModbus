@@ -25,10 +25,13 @@ CONF_SUPPRESS_LOG_NOISE = "suppress_log_noise"
 CONF_ENTITY_CATEGORY = "entity_category"
 CONF_VALUE_MAP = "value_map"
 CONF_BIT_LABELS = "bit_labels"
+CONF_ON_VALUE = "on_value"
+CONF_OFF_VALUE = "off_value"
 
 ENTITY_SENSOR = "sensor"
 ENTITY_NUMBER = "number"
-ENTITY_TYPES = [ENTITY_SENSOR, ENTITY_NUMBER]
+ENTITY_SWITCH = "switch"
+ENTITY_TYPES = [ENTITY_SENSOR, ENTITY_NUMBER, ENTITY_SWITCH]
 
 REG_HOLDING = "holding"
 REG_INPUT = "input"
