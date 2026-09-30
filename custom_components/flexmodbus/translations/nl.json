@@ -86,7 +86,8 @@
           "value_map": "Waardenlijst (optioneel)",
           "bit_labels": "Bitvlaggen (optioneel)",
           "on_value": "Aan-waarde",
-          "off_value": "Uit-waarde"
+          "off_value": "Uit-waarde",
+          "string_length": "Lengte (registers)"
         },
         "data_description": {
           "address": "Zoals in de handleiding van het apparaat: 1 is het eerste register.",
@@ -99,7 +100,8 @@
           "value_map": "Zet ruwe registercodes om naar leesbare tekst, bijvoorbeeld voor een statusregister. Eén regel per code, in de vorm 'code: label', bijvoorbeeld:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLaat leeg voor een gewoon getal. Alleen mogelijk bij Sensor (niet Number) en niet bij tekst- of float32-registers. Een code die niet in de lijst staat, wordt getoond als 'Onbekend (code)'.",
           "bit_labels": "Zet losse bits in een B16/B32-register om naar leesbare namen, bijvoorbeeld voor een foutstatusregister. Eén regel per bit, in de vorm 'bitnummer: label', bijvoorbeeld:\n0: Communicatiefout\n1: Celspanning te hoog\n3: Temperatuur te hoog\nAlle actieve (op 1 staande) bits worden getoond, gescheiden door komma's; een niet-benoemde actieve bit verschijnt als 'bitN (onbekend)'. Staat geen enkele bit aan, dan toont de sensor 'Geen actieve vlaggen'. Alleen bij Sensor met datatype uint16 (bits 0-15) of uint32 (bits 0-31), en niet te combineren met een waardenlijst.",
           "on_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
-          "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005)."
+          "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
+          "string_length": "Alleen bij datatype 'Tekst / String'. Aantal registers dat deze tekst inneemt (1-125), bijvoorbeeld 7 voor een 14-tekens versienummer, of 16/32 voor de vroegere vaste SunSpec-lengtes."
         }
       },
       "select_edit": {
@@ -130,7 +132,8 @@
           "value_map": "Waardenlijst (optioneel)",
           "bit_labels": "Bitvlaggen (optioneel)",
           "on_value": "Aan-waarde",
-          "off_value": "Uit-waarde"
+          "off_value": "Uit-waarde",
+          "string_length": "Lengte (registers)"
         },
         "data_description": {
           "address": "Zoals in de handleiding van het apparaat: 1 is het eerste register.",
@@ -143,7 +146,8 @@
           "value_map": "Zet ruwe registercodes om naar leesbare tekst, bijvoorbeeld voor een statusregister. Eén regel per code, in de vorm 'code: label', bijvoorbeeld:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLaat leeg voor een gewoon getal. Alleen mogelijk bij Sensor (niet Number) en niet bij tekst- of float32-registers. Een code die niet in de lijst staat, wordt getoond als 'Onbekend (code)'.",
           "bit_labels": "Zet losse bits in een B16/B32-register om naar leesbare namen, bijvoorbeeld voor een foutstatusregister. Eén regel per bit, in de vorm 'bitnummer: label', bijvoorbeeld:\n0: Communicatiefout\n1: Celspanning te hoog\n3: Temperatuur te hoog\nAlle actieve (op 1 staande) bits worden getoond, gescheiden door komma's; een niet-benoemde actieve bit verschijnt als 'bitN (onbekend)'. Staat geen enkele bit aan, dan toont de sensor 'Geen actieve vlaggen'. Alleen bij Sensor met datatype uint16 (bits 0-15) of uint32 (bits 0-31), en niet te combineren met een waardenlijst.",
           "on_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
-          "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005)."
+          "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
+          "string_length": "Alleen bij datatype 'Tekst / String'. Aantal registers dat deze tekst inneemt (1-125), bijvoorbeeld 7 voor een 14-tekens versienummer, of 16/32 voor de vroegere vaste SunSpec-lengtes."
         }
       },
       "select_delete": {
@@ -189,7 +193,8 @@
       "bit_labels_out_of_range": "Bitnummer moet tussen 0-15 (uint16) of 0-31 (uint32) liggen.",
       "yaml_invalid": "Kan deze YAML niet lezen: {yaml_error}",
       "float32_not_switch": "Een Switch is niet mogelijk bij datatype float32.",
-      "on_off_must_differ": "De aan- en uit-waarde moeten van elkaar verschillen."
+      "on_off_must_differ": "De aan- en uit-waarde moeten van elkaar verschillen.",
+      "string_length_out_of_range": "De lengte moet tussen 1 en 125 registers liggen."
     },
     "abort": {
       "no_registers": "Er zijn nog geen registers ingesteld.",
@@ -218,8 +223,7 @@
         "uint32": "32-bit Unsigned Integer (2 registers)",
         "int32": "32-bit Signed Integer (2 registers)",
         "float32": "32-bit Floating Point (2 registers)",
-        "string16": "Tekst / String(16): 16 registers, max. 32 tekens",
-        "string32": "Tekst / String(32): 32 registers, max. 64 tekens"
+        "string": "Tekst / String (zelf lengte instellen, bijv. 16 of 32 registers voor de oude SunSpec-notatie)"
       }
     },
     "byte_order": {

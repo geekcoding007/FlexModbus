@@ -175,7 +175,7 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
             return self._fail(reg, str(result)), True
 
         try:
-            raw = decode_registers(result.registers, reg.data_type, reg.byte_order)
+            raw = decode_registers(result.registers, reg.data_type, reg.byte_order, reg.string_length)
         except (ValueError, struct.error) as err:
             return self._fail(reg, f"ongeldige data: {err}"), True
 

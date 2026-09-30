@@ -86,7 +86,8 @@
           "value_map": "Value list (optional)",
           "bit_labels": "Bit flags (optional)",
           "on_value": "On value",
-          "off_value": "Off value"
+          "off_value": "Off value",
+          "string_length": "Length (registers)"
         },
         "data_description": {
           "address": "As in the device manual: 1 is the first register.",
@@ -99,7 +100,8 @@
           "value_map": "Map raw register codes to readable text, e.g. for a status register. One line per code, formatted as 'code: label', for example:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLeave empty for a plain number. Only available for Sensor (not Number), and not for text or float32 registers. A code not in the list is shown as 'Unknown (code)'.",
           "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list.",
           "on_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
-          "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005)."
+          "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
+          "string_length": "Only for data type 'Text / String'. Number of registers this text occupies (1-125), e.g. 7 for a 14-character version string, or 16/32 for the former fixed SunSpec lengths."
         }
       },
       "select_edit": {
@@ -130,7 +132,8 @@
           "value_map": "Value list (optional)",
           "bit_labels": "Bit flags (optional)",
           "on_value": "On value",
-          "off_value": "Off value"
+          "off_value": "Off value",
+          "string_length": "Length (registers)"
         },
         "data_description": {
           "address": "As in the device manual: 1 is the first register.",
@@ -143,7 +146,8 @@
           "value_map": "Map raw register codes to readable text, e.g. for a status register. One line per code, formatted as 'code: label', for example:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLeave empty for a plain number. Only available for Sensor (not Number), and not for text or float32 registers. A code not in the list is shown as 'Unknown (code)'.",
           "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list.",
           "on_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
-          "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005)."
+          "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
+          "string_length": "Only for data type 'Text / String'. Number of registers this text occupies (1-125), e.g. 7 for a 14-character version string, or 16/32 for the former fixed SunSpec lengths."
         }
       },
       "select_delete": {
@@ -189,7 +193,8 @@
       "bit_labels_out_of_range": "Bit number must be between 0-15 (uint16) or 0-31 (uint32).",
       "yaml_invalid": "Could not parse this YAML: {yaml_error}",
       "float32_not_switch": "A Switch is not possible with data type float32.",
-      "on_off_must_differ": "The on and off values must be different from each other."
+      "on_off_must_differ": "The on and off values must be different from each other.",
+      "string_length_out_of_range": "The length must be between 1 and 125 registers."
     },
     "abort": {
       "no_registers": "No registers have been configured yet.",
@@ -218,8 +223,7 @@
         "uint32": "32-bit unsigned integer (2 registers)",
         "int32": "32-bit signed integer (2 registers)",
         "float32": "32-bit floating point (2 registers)",
-        "string16": "Text / String(16): 16 registers, max. 32 characters",
-        "string32": "Text / String(32): 32 registers, max. 64 characters"
+        "string": "Text / String (set your own length, e.g. 16 or 32 registers for the old SunSpec notation)"
       }
     },
     "byte_order": {

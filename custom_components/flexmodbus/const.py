@@ -27,6 +27,7 @@ CONF_VALUE_MAP = "value_map"
 CONF_BIT_LABELS = "bit_labels"
 CONF_ON_VALUE = "on_value"
 CONF_OFF_VALUE = "off_value"
+CONF_STRING_LENGTH = "string_length"
 
 ENTITY_SENSOR = "sensor"
 ENTITY_NUMBER = "number"
@@ -41,7 +42,9 @@ FRAMER_SOCKET = "socket"
 FRAMER_RTU = "rtu"
 FRAMERS = [FRAMER_SOCKET, FRAMER_RTU]
 
-DATA_TYPES = ["uint16", "int16", "uint32", "int32", "float32", "string16", "string32"]
+DATA_TYPES = ["uint16", "int16", "uint32", "int32", "float32", "string"]
+MIN_STRING_LENGTH = 1
+MAX_STRING_LENGTH = 125
 
 BYTE_ORDERS = ["abcd", "cdab", "badc", "dcba"]
 

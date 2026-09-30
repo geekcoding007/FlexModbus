@@ -26,6 +26,7 @@ from .const import (
     CONF_BIT_LABELS,
     CONF_ON_VALUE,
     CONF_OFF_VALUE,
+    CONF_STRING_LENGTH,
     ENTITY_CATEGORIES,
     ENTITY_NUMBER,
     ENTITY_SENSOR,
@@ -50,8 +51,9 @@ _INT_RANGES = {
     "uint32": (0, 0xFFFFFFFF),
     "int32": (-0x80000000, 0x7FFFFFFF),
 }
-_STRING_TYPES = {"string16": 16, "string32": 32}
-_WORD_COUNT = {"uint16": 1, "int16": 1, "uint32": 2, "int32": 2, "float32": 2, **_STRING_TYPES}
+_LEGACY_STRING_LEN = {"string16": 16, "string32": 32}
+_STRING_TYPES = {"string"}
+_WORD_COUNT = {"uint16": 1, "int16": 1, "uint32": 2, "int32": 2, "float32": 2}
 
 _PERMUTATIONS = {
     "abcd": (0, 1, 2, 3),
@@ -64,18 +66,29 @@ def normalize_byte_order(value: str | None) -> str:
     value = LEGACY_BYTE_ORDERS.get(value, value)
     return value if value in _PERMUTATIONS else "abcd"
 
-def is_string_type(data_type: str) -> bool:
-    return data_type in _STRING_TYPES
+def normalize_data_type(data_type: str | None) -> tuple[str, int | None]:
+    if data_type in _LEGACY_STRING_LEN:
+        return "string", _LEGACY_STRING_LEN[data_type]
+    return data_type, None
 
-def register_count(data_type: str) -> int:
+def is_string_type(data_type: str) -> bool:
+    return data_type in _STRING_TYPES or data_type in _LEGACY_STRING_LEN
+
+def register_count(data_type: str, string_length: int | None = None) -> int:
+    if data_type in _LEGACY_STRING_LEN:
+        return _LEGACY_STRING_LEN[data_type]
+    if data_type == "string":
+        return string_length or 1
     return _WORD_COUNT.get(data_type, 1)
 
-def decode_registers(registers: list[int], data_type: str, byte_order: str) -> int | float | str:
-    count = register_count(data_type)
+def decode_registers(
+    registers: list[int], data_type: str, byte_order: str, string_length: int | None = None
+) -> int | float | str:
+    count = register_count(data_type, string_length)
     if len(registers) < count:
         raise ValueError(f"verwacht {count} registers, kreeg er {len(registers)}")
 
-    if data_type in _STRING_TYPES:
+    if data_type in _STRING_TYPES or data_type in _LEGACY_STRING_LEN:
         raw = b"".join(struct.pack(">H", int(r) & 0xFFFF) for r in registers[:count])
         return raw.split(b"\x00", 1)[0].decode("utf-8", errors="replace").strip()
 
@@ -88,7 +101,7 @@ def decode_registers(registers: list[int], data_type: str, byte_order: str) -> i
     return struct.unpack(_FORMATS[data_type], raw)[0]
 
 def encode_value(raw: float, data_type: str, byte_order: str) -> list[int]:
-    if data_type in _STRING_TYPES:
+    if data_type in _STRING_TYPES or data_type in _LEGACY_STRING_LEN:
         raise ValueError("tekstregisters zijn alleen-lezen")
     if data_type == "float32":
         packed = struct.pack(">f", float(raw))
@@ -126,6 +139,7 @@ class RegisterDef:
     bit_labels: dict[int, str] | None
     on_value: int
     off_value: int
+    string_length: int | None
     min_value: float
     max_value: float
     step: float
@@ -136,7 +150,7 @@ class RegisterDef:
 
     @property
     def count(self) -> int:
-        return register_count(self.data_type)
+        return register_count(self.data_type, self.string_length)
 
     @property
     def is_enum(self) -> bool:
@@ -198,6 +212,7 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         unique_id = f"modbus_{entry_id}_{slave}_{register_type}_{address}"
 
     data_type = reg.get(CONF_DATA_TYPE, "uint16")
+    data_type, legacy_string_length = normalize_data_type(data_type)
     if data_type not in _FORMATS and data_type not in _STRING_TYPES:
         data_type = "uint16"
     is_text = data_type in _STRING_TYPES
@@ -233,6 +248,12 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         if on_value == off_value:
             raise ValueError("de aan- en uit-waarde van een Switch moeten verschillend zijn")
 
+    string_length: int | None = None
+    if data_type == "string":
+        string_length = legacy_string_length if legacy_string_length is not None else int(reg.get(CONF_STRING_LENGTH, 8))
+        if not (1 <= string_length <= 125):
+            raise ValueError("de lengte van een tekstregister moet tussen 1 en 125 registers liggen")
+
     multiplier = float(reg.get(CONF_MULTIPLIER, 1.0)) or 1.0
 
     category = reg.get(CONF_ENTITY_CATEGORY, "none")
@@ -260,6 +281,7 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         bit_labels=bit_labels,
         on_value=on_value,
         off_value=off_value,
+        string_length=string_length,
         min_value=float(reg.get(CONF_MIN, 0.0)),
         max_value=float(reg.get(CONF_MAX, 100.0)),
         step=float(reg.get(CONF_STEP, 1.0)) or 1.0,

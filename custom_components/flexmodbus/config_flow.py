@@ -45,6 +45,7 @@ from .const import (
     CONF_OFFSET,
     CONF_ON_VALUE,
     CONF_OFF_VALUE,
+    CONF_STRING_LENGTH,
     CONF_REG_ADDRESS,
     CONF_REG_SLAVE,
     CONF_REG_TYPE,
@@ -73,15 +74,17 @@ from .const import (
     MAX_IDLE_CLOSE_SECONDS,
     MAX_REQUEST_DELAY,
     MAX_SCAN_INTERVAL,
+    MAX_STRING_LENGTH,
     MIN_IDLE_CLOSE_SECONDS,
     MIN_REQUEST_DELAY,
     MIN_SCAN_INTERVAL,
+    MIN_STRING_LENGTH,
     REG_HOLDING,
     REG_INPUT,
     REGISTER_TYPES,
     STATE_CLASSES,
 )
-from .register import get_raw_registers, is_string_type, normalize_byte_order, parse_register
+from .register import get_raw_registers, is_string_type, normalize_byte_order, normalize_data_type, parse_register
 from .yaml_import import Skipped, convert_yaml
 
 async def _async_test_connection(host: str, port: int, framer: str) -> bool:
@@ -306,6 +309,9 @@ def _parse_bit_labels(text: str) -> tuple[dict[str, str] | None, str | None]:
 
 def _register_schema(defaults: dict[str, Any]) -> vol.Schema:
     d = defaults
+    legacy_data_type, legacy_string_length = normalize_data_type(d.get(CONF_DATA_TYPE))
+    if legacy_string_length is not None:
+        d = {**d, CONF_DATA_TYPE: legacy_data_type, CONF_STRING_LENGTH: legacy_string_length}
     return vol.Schema(
         {
             vol.Required(CONF_NAME, default=d.get(CONF_NAME, "")): str,
@@ -332,6 +338,13 @@ def _register_schema(defaults: dict[str, Any]) -> vol.Schema:
             ),
             vol.Required(CONF_DATA_TYPE, default=d.get(CONF_DATA_TYPE, "uint16")): _select(
                 DATA_TYPES, "data_type"
+            ),
+            vol.Required(
+                CONF_STRING_LENGTH, default=d.get(CONF_STRING_LENGTH, 8)
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=MIN_STRING_LENGTH, max=MAX_STRING_LENGTH, step=1, mode=NumberSelectorMode.BOX
+                )
             ),
             vol.Required(
                 CONF_BYTE_ORDER, default=normalize_byte_order(d.get(CONF_BYTE_ORDER))
@@ -364,6 +377,7 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     reg[CONF_BYTE_ORDER] = normalize_byte_order(reg.get(CONF_BYTE_ORDER))
     reg[CONF_REG_SLAVE] = int(reg[CONF_REG_SLAVE])
     reg[CONF_REG_ADDRESS] = int(reg[CONF_REG_ADDRESS])
+    reg[CONF_STRING_LENGTH] = int(reg.get(CONF_STRING_LENGTH, 8))
     if reg[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
         reg[CONF_REG_TYPE] = REG_HOLDING
     if reg[CONF_ENT_TYPE] == ENTITY_SWITCH:
@@ -407,6 +421,11 @@ def _validate(
         errors[CONF_DATA_TYPE] = "string_not_number"
     elif user_input[CONF_ENT_TYPE] == ENTITY_SWITCH and user_input[CONF_DATA_TYPE] == "float32":
         errors[CONF_DATA_TYPE] = "float32_not_switch"
+
+    if user_input[CONF_DATA_TYPE] == "string":
+        length = int(user_input.get(CONF_STRING_LENGTH, 8))
+        if not (MIN_STRING_LENGTH <= length <= MAX_STRING_LENGTH):
+            errors[CONF_STRING_LENGTH] = "string_length_out_of_range"
 
     value_map, value_map_error = _parse_value_map(user_input.get(CONF_VALUE_MAP, ""))
     if value_map_error:
