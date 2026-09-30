@@ -11,7 +11,7 @@ Gebouwd en uitgebreid tijdens het aansluiten van een SolarEdge- en een Solplanet
 - **Registers volledig zelf configureren** — geen vaste apparaatprofielen. Holding- en input-registers, met adres, slave-ID, datatype en byte-volgorde.
 - **Datatypes**: `uint16`, `int16`, `uint32`, `int32`, `float32`, en tekst (`string16` / `string32`, SunSpec-notatie: het aantal registers, dus resp. max. 32 en 64 tekens).
 - **Byte-volgorde**: ABCD (big endian), CDAB, BADC, DCBA (little endian) — voor 32-bit waarden.
-- **Sensor- én Number-entiteiten**: alleen-lezen waarden of schrijfbare instelwaarden (Number kan alleen op holding-registers).
+- **Sensor-, Number- en Switch-entiteiten**: alleen-lezen waarden, schrijfbare instelwaarden, of een aan/uit-schakelaar (Number en Switch kunnen alleen op holding-registers). Een Switch krijgt in Home Assistant automatisch een plek onder "Bediening" op de apparaatpagina, met instelbare aan/uit-codes (standaard 1/0).
 - **Entiteitscategorie**: normaal, diagnostiek of configuratie (dat laatste alleen voor Number).
 - **Waardenlijst voor statuscodes**: zet een ruwe code (bijvoorbeeld `0`, `1`, `2`) om naar leesbare tekst (`Wait`, `Normal`, `Fault`), als nette Home Assistant-enum-sensor met een keuzelijst van mogelijke statussen. Alleen voor Sensor; niet voor tekst- of float32-registers.
 - **Bitvlaggen voor foutstatusregisters (B16/B32)**: toon welke losse bits in één register actief zijn als leesbare, kommagescheiden tekst (bijvoorbeeld "Communicatiefout, Celspanning te hoog"). Alleen voor Sensor met `uint16`/`uint32`, niet te combineren met een waardenlijst op hetzelfde register.
@@ -78,6 +78,7 @@ Ga naar de integratie → **Configureren** (het tandwiel-icoon) om registers toe
 | Eenheid | Bijvoorbeeld `W`, `kWh`, `°C`. Verplicht zodra er een apparaatklasse is gekozen die een eenheid vereist. |
 | Vermenigvuldiger / offset | Waarde = ruwe registerwaarde × vermenigvuldiger + offset. |
 | Minimum / maximum / stapgrootte | Alleen voor Number. |
+| Aan-waarde / uit-waarde | Alleen voor Switch. De ruwe registerwaarde die "aan" betekent, en die welke "uit" betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld `0x000A`/`0x0005`). |
 | Waardenlijst (optioneel) | Eén regel per code, in de vorm `code: label`, bijvoorbeeld:<br>`0: Wait`<br>`1: Normal`<br>`2: Fault`<br>`4: Checking`<br>Laat leeg voor een gewoon getal. Alleen bij Sensor, niet bij tekst- of float32-registers. Een code die niet in de lijst staat, wordt getoond als "Onbekend (code)". |
 | Bitvlaggen (optioneel) | Voor B16/B32-registers (losse aan/uit-vlaggen in één getal, zoals foutstatusregisters). Eén regel per bit, in de vorm `bitnummer: label`, bijvoorbeeld:<br>`0: Communicatiefout`<br>`1: Celspanning te hoog`<br>`3: Temperatuur te hoog`<br>Toont alle actieve bits, gescheiden door komma's ("Geen actieve vlaggen" als er geen actief zijn); een niet-benoemde actieve bit verschijnt als "bitN (onbekend)". Alleen bij Sensor met datatype `uint16` (bit 0-15) of `uint32` (bit 0-31), en niet samen met een waardenlijst op hetzelfde register. |
 

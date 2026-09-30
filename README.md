@@ -11,7 +11,7 @@ Built and extended while connecting a SolarEdge and a Solplanet inverter through
 - **Fully self-configured registers** — no fixed device profiles. Holding and input registers, with address, slave ID, data type and byte order.
 - **Data types**: `uint16`, `int16`, `uint32`, `int32`, `float32`, and text (`string16` / `string32`, SunSpec notation: the number is the register count, so max. 32 and 64 characters respectively).
 - **Byte order**: ABCD (big endian), CDAB, BADC, DCBA (little endian) — for 32-bit values.
-- **Sensor and Number entities**: read-only values or writable setpoints (Number is limited to holding registers).
+- **Sensor, Number and Switch entities**: read-only values, writable setpoints, or an on/off toggle (Number and Switch are limited to holding registers). A Switch automatically lands under "Controls" on the device page in Home Assistant, with configurable on/off codes (default 1/0).
 - **Entity category**: normal, diagnostic, or config (the latter only for Number).
 - **Value list for status codes**: map a raw code (e.g. `0`, `1`, `2`) to readable text (`Wait`, `Normal`, `Fault`), rendered as a proper Home Assistant enum sensor with a dropdown of possible states. Sensor only; not for text or float32 registers.
 - **Bit flags for status/error registers (B16/B32)**: show which individual bits in a register are active as readable, comma-separated text (e.g. "Communication error, Cell voltage too high"). Sensor only, `uint16`/`uint32`, cannot be combined with a value list on the same register.
@@ -78,6 +78,7 @@ Go to the integration → **Configure** (the gear icon) to add, edit or delete r
 | Unit | E.g. `W`, `kWh`, `°C`. Required once a device class that needs a unit is selected. |
 | Multiplier / offset | Value = raw register value × multiplier + offset. |
 | Minimum / maximum / step | Number only. |
+| On value / off value | Switch only. The raw register value that means "on", and the one that means "off". Default 1/0; some devices use other codes (e.g. `0x000A`/`0x0005`). |
 | Value list (optional) | One line per code, formatted as `code: label`, e.g.:<br>`0: Wait`<br>`1: Normal`<br>`2: Fault`<br>`4: Checking`<br>Leave empty for a plain number. Sensor only, not for text or float32 registers. A code not in the list is shown as "Unknown (code)". |
 | Bit flags (optional) | For B16/B32 registers (individual on/off flags in one number, such as error status registers). One line per bit, formatted as `bit number: label`, e.g.:<br>`0: Communication error`<br>`1: Cell voltage too high`<br>`3: Temperature too high`<br>Shows all active bits, comma-separated ("No active flags" if none are set); an unlabeled active bit appears as "bitN (unknown)". Sensor only, data type `uint16` (bit 0-15) or `uint32` (bit 0-31), and cannot be combined with a value list on the same register. |
 
