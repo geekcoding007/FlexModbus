@@ -84,7 +84,9 @@
           "step_value": "Step size (Number only)",
           "entity_category": "Category",
           "value_map": "Value list (optional)",
-          "bit_labels": "Bit flags (optional)"
+          "bit_labels": "Bit flags (optional)",
+          "on_value": "On value",
+          "off_value": "Off value"
         },
         "data_description": {
           "address": "As in the device manual: 1 is the first register.",
@@ -95,7 +97,9 @@
           "data_type": "For text, byte order, multiplier, offset, unit and classes do not apply.",
           "entity_category": "Diagnostic and configuration entities are shown in their own group on the device page and are not added to dashboards automatically. 'Configuration' is only available for a Number.",
           "value_map": "Map raw register codes to readable text, e.g. for a status register. One line per code, formatted as 'code: label', for example:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLeave empty for a plain number. Only available for Sensor (not Number), and not for text or float32 registers. A code not in the list is shown as 'Unknown (code)'.",
-          "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list."
+          "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list.",
+          "on_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
+          "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005)."
         }
       },
       "select_edit": {
@@ -124,7 +128,9 @@
           "step_value": "Step size (Number only)",
           "entity_category": "Category",
           "value_map": "Value list (optional)",
-          "bit_labels": "Bit flags (optional)"
+          "bit_labels": "Bit flags (optional)",
+          "on_value": "On value",
+          "off_value": "Off value"
         },
         "data_description": {
           "address": "As in the device manual: 1 is the first register.",
@@ -135,7 +141,9 @@
           "data_type": "For text, byte order, multiplier, offset, unit and classes do not apply.",
           "entity_category": "Diagnostic and configuration entities are shown in their own group on the device page and are not added to dashboards automatically. 'Configuration' is only available for a Number.",
           "value_map": "Map raw register codes to readable text, e.g. for a status register. One line per code, formatted as 'code: label', for example:\n0: Wait\n1: Normal\n2: Fault\n4: Checking\nLeave empty for a plain number. Only available for Sensor (not Number), and not for text or float32 registers. A code not in the list is shown as 'Unknown (code)'.",
-          "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list."
+          "bit_labels": "Map individual bits in a B16/B32 register to readable names, e.g. for an error status register. One line per bit, formatted as 'bit number: label', for example:\n0: Communication error\n1: Cell voltage too high\n3: Temperature too high\nAll active (set) bits are shown, comma-separated; an unlabeled active bit appears as 'bitN (unknown)'. If no bits are set, the sensor shows 'No active flags'. Only for Sensor with data type uint16 (bits 0-15) or uint32 (bits 0-31), and cannot be combined with a value list.",
+          "on_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
+          "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005)."
         }
       },
       "select_delete": {
@@ -167,19 +175,21 @@
       "unit_required": "This device class needs a unit (e.g. W, kWh, °C).",
       "duplicate_register": "A register with the same slave, register type and number already exists.",
       "slave_broadcast": "Slave ID 0 is the broadcast address; devices do not answer it. Use e.g. 1.",
-      "string_not_number": "A text register is read-only and cannot be a Number; choose Sensor.",
+      "string_not_number": "A text register cannot be a Number or Switch; choose Sensor.",
       "config_not_for_sensor": "A sensor cannot be in the Configuration category; choose Normal or Diagnostic.",
       "value_map_format": "Each line must be formatted as 'code: label', with a whole number as the code.",
       "value_map_duplicate": "The same code appears more than once in the value list.",
-      "value_map_not_number": "A register with a value list cannot be a Number; choose Sensor.",
+      "value_map_not_number": "A register with a value list cannot be a Number or Switch; choose Sensor.",
       "value_map_unsupported_datatype": "A value list is not possible for text or float32 registers.",
       "bit_labels_format": "Each line must be formatted as 'bit number: label', with a non-negative whole number as the bit number.",
       "bit_labels_duplicate": "The same bit number appears more than once.",
-      "bit_labels_not_number": "A register with bit flags cannot be a Number; choose Sensor.",
+      "bit_labels_not_number": "A register with bit flags cannot be a Number or Switch; choose Sensor.",
       "bit_labels_unsupported_datatype": "Bit flags are only possible with data type uint16 or uint32.",
       "bit_labels_and_value_map": "A value list and bit flags cannot both be used on the same register.",
       "bit_labels_out_of_range": "Bit number must be between 0-15 (uint16) or 0-31 (uint32).",
-      "yaml_invalid": "Could not parse this YAML: {yaml_error}"
+      "yaml_invalid": "Could not parse this YAML: {yaml_error}",
+      "float32_not_switch": "A Switch is not possible with data type float32.",
+      "on_off_must_differ": "The on and off values must be different from each other."
     },
     "abort": {
       "no_registers": "No registers have been configured yet.",
@@ -191,7 +201,8 @@
     "entity_type": {
       "options": {
         "sensor": "Read-only (Sensor)",
-        "number": "Adjustable input (Number)"
+        "number": "Adjustable input (Number)",
+        "switch": "Switch"
       }
     },
     "register_type": {
