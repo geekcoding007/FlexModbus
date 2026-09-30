@@ -9,7 +9,7 @@ Built and extended while connecting a SolarEdge and a Solplanet inverter through
 ## Features
 
 - **Fully self-configured registers** — no fixed device profiles. Holding and input registers, with address, slave ID, data type and byte order.
-- **Data types**: `uint16`, `int16`, `uint32`, `int32`, `float32`, and text (`string16` / `string32`, SunSpec notation: the number is the register count, so max. 32 and 64 characters respectively).
+- **Data types**: `uint16`, `int16`, `uint32`, `int32`, `float32`, and text — `string`, with a custom length (1-125 registers), e.g. 16 or 32 for SunSpec notation or any other length your device uses.
 - **Byte order**: ABCD (big endian), CDAB, BADC, DCBA (little endian) — for 32-bit values.
 - **Sensor, Number and Switch entities**: read-only values, writable setpoints, or an on/off toggle (Number and Switch are limited to holding registers). A Switch automatically lands under "Controls" on the device page in Home Assistant, with configurable on/off codes (default 1/0).
 - **Entity category**: normal, diagnostic, or config (the latter only for Number).
@@ -73,7 +73,8 @@ Go to the integration → **Configure** (the gear icon) to add, edit or delete r
 | Register type | Holding or Input. A Number can only be Holding. |
 | Register number | As in the device's manual — 1 is the first register (1-based, not 0-based). |
 | Slave/unit ID | The device's Modbus address on the bus (often 1). |
-| Data type | See Features above. For a text type (`string16`/`string32`), byte order, multiplier, offset, unit and classes are automatically dropped. |
+| Data type | See Features above. For the text type (`string`), byte order, multiplier, offset, unit and classes are automatically dropped. |
+| Length (registers) | Only for data type `string`. Number of registers the text occupies (1-125), e.g. 16 or 32 for SunSpec notation, or 7 for a 14-character version string. |
 | Byte order | Only relevant for 32-bit values (2 registers). See Troubleshooting below if a value is completely off. |
 | Unit | E.g. `W`, `kWh`, `°C`. Required once a device class that needs a unit is selected. |
 | Multiplier / offset | Value = raw register value × multiplier + offset. |

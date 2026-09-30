@@ -9,7 +9,7 @@ Gebouwd en uitgebreid tijdens het aansluiten van een SolarEdge- en een Solplanet
 ## Kenmerken
 
 - **Registers volledig zelf configureren** — geen vaste apparaatprofielen. Holding- en input-registers, met adres, slave-ID, datatype en byte-volgorde.
-- **Datatypes**: `uint16`, `int16`, `uint32`, `int32`, `float32`, en tekst (`string16` / `string32`, SunSpec-notatie: het aantal registers, dus resp. max. 32 en 64 tekens).
+- **Datatypes**: `uint16`, `int16`, `uint32`, `int32`, `float32`, en tekst — `string`, met zelf in te stellen lengte (1-125 registers), bijvoorbeeld 16 of 32 voor de SunSpec-notatie of elke andere lengte die jouw apparaat gebruikt.
 - **Byte-volgorde**: ABCD (big endian), CDAB, BADC, DCBA (little endian) — voor 32-bit waarden.
 - **Sensor-, Number- en Switch-entiteiten**: alleen-lezen waarden, schrijfbare instelwaarden, of een aan/uit-schakelaar (Number en Switch kunnen alleen op holding-registers). Een Switch krijgt in Home Assistant automatisch een plek onder "Bediening" op de apparaatpagina, met instelbare aan/uit-codes (standaard 1/0).
 - **Entiteitscategorie**: normaal, diagnostiek of configuratie (dat laatste alleen voor Number).
@@ -73,7 +73,8 @@ Ga naar de integratie → **Configureren** (het tandwiel-icoon) om registers toe
 | Registertype | Holding of Input. Een Number kan alleen Holding zijn. |
 | Registernummer | Zoals in de handleiding van het apparaat — 1 is het eerste register (1-gebaseerd, niet 0-gebaseerd). |
 | Slave-/unit-ID | Het Modbus-adres van het apparaat op de bus (vaak 1). |
-| Datatype | Zie hierboven bij Kenmerken. Bij een tekst-type (`string16`/`string32`) vervallen byte-volgorde, vermenigvuldiger, offset, eenheid en klassen automatisch. |
+| Datatype | Zie hierboven bij Kenmerken. Bij het tekst-type (`string`) vervallen byte-volgorde, vermenigvuldiger, offset, eenheid en klassen automatisch. |
+| Lengte (registers) | Alleen bij datatype `string`. Aantal registers dat de tekst inneemt (1-125), bijvoorbeeld 16 of 32 voor de SunSpec-notatie, of 7 voor een 14-tekens versienummer. |
 | Byte-volgorde | Alleen van belang bij 32-bit waarden (2 registers). Zie hieronder bij Problemen oplossen als een waarde er compleet naast zit. |
 | Eenheid | Bijvoorbeeld `W`, `kWh`, `°C`. Verplicht zodra er een apparaatklasse is gekozen die een eenheid vereist. |
 | Vermenigvuldiger / offset | Waarde = ruwe registerwaarde × vermenigvuldiger + offset. |
