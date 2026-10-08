@@ -47,6 +47,7 @@ from .const import (
     CONF_OFF_VALUE,
     CONF_STRING_LENGTH,
     CONF_SCALE_FACTOR_ADDRESS,
+    CONF_NAN_AS_ZERO,
     CONF_REG_ADDRESS,
     CONF_REG_SLAVE,
     CONF_REG_TYPE,
@@ -356,6 +357,9 @@ def _register_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(
                 CONF_SCALE_FACTOR_ADDRESS, default=d.get(CONF_SCALE_FACTOR_ADDRESS, 0)
             ): vol.All(vol.Coerce(int), vol.Range(min=0, max=65536)),
+            vol.Required(
+                CONF_NAN_AS_ZERO, default=d.get(CONF_NAN_AS_ZERO, False)
+            ): BooleanSelector(),
             vol.Required(CONF_MIN, default=d.get(CONF_MIN, 0.0)): vol.Coerce(float),
             vol.Required(CONF_MAX, default=d.get(CONF_MAX, 100.0)): vol.Coerce(float),
             vol.Required(CONF_STEP, default=d.get(CONF_STEP, 1.0)): vol.Coerce(float),
@@ -383,6 +387,7 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     reg[CONF_REG_ADDRESS] = int(reg[CONF_REG_ADDRESS])
     reg[CONF_STRING_LENGTH] = int(reg.get(CONF_STRING_LENGTH, 8))
     reg[CONF_SCALE_FACTOR_ADDRESS] = int(reg.get(CONF_SCALE_FACTOR_ADDRESS, 0) or 0)
+    reg[CONF_NAN_AS_ZERO] = bool(reg.get(CONF_NAN_AS_ZERO, False)) and bool(reg[CONF_SCALE_FACTOR_ADDRESS])
     if reg[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
         reg[CONF_REG_TYPE] = REG_HOLDING
     if reg[CONF_ENT_TYPE] == ENTITY_SWITCH:

@@ -28,6 +28,7 @@ from .const import (
     CONF_OFF_VALUE,
     CONF_STRING_LENGTH,
     CONF_SCALE_FACTOR_ADDRESS,
+    CONF_NAN_AS_ZERO,
     ENTITY_CATEGORIES,
     ENTITY_NUMBER,
     ENTITY_SENSOR,
@@ -155,6 +156,7 @@ class RegisterDef:
     off_value: int
     string_length: int | None
     scale_factor_address: int | None
+    nan_as_zero: bool
     min_value: float
     max_value: float
     step: float
@@ -292,6 +294,8 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         if bit_labels:
             raise ValueError("een schaalfactor-register is niet mogelijk bij bitvlaggen")
 
+    nan_as_zero = bool(reg.get(CONF_NAN_AS_ZERO, False))
+
     multiplier = float(reg.get(CONF_MULTIPLIER, 1.0)) or 1.0
 
     category = reg.get(CONF_ENTITY_CATEGORY, "none")
@@ -321,6 +325,7 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         off_value=off_value,
         string_length=string_length,
         scale_factor_address=scale_factor_address,
+        nan_as_zero=nan_as_zero,
         min_value=float(reg.get(CONF_MIN, 0.0)),
         max_value=float(reg.get(CONF_MAX, 100.0)),
         step=float(reg.get(CONF_STEP, 1.0)) or 1.0,

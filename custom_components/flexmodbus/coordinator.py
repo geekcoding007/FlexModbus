@@ -189,6 +189,10 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
         scale_factor = None
         if reg.has_scale_factor:
             if is_nan_raw(reg.data_type, raw):
+                if reg.nan_as_zero:
+                    self._decode_errors = 0
+                    self._mark_ok(reg)
+                    return 0.0, True
                 return self._fail(reg, "waarde is niet beschikbaar (SunSpec NaN-sentinel)"), True
             try:
                 sf_result = await self._read_scale_factor(reg)
@@ -203,6 +207,10 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
             except (ValueError, struct.error) as err:
                 return self._fail(reg, f"ongeldige schaalfactor-data: {err}"), True
             if is_nan_raw("int16", scale_factor):
+                if reg.nan_as_zero:
+                    self._decode_errors = 0
+                    self._mark_ok(reg)
+                    return 0.0, True
                 return self._fail(reg, "schaalfactor is niet beschikbaar (SunSpec NaN-sentinel)"), True
 
         value = reg.to_value(raw, scale_factor=scale_factor)
