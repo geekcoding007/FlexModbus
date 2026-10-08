@@ -46,6 +46,7 @@ from .const import (
     CONF_ON_VALUE,
     CONF_OFF_VALUE,
     CONF_STRING_LENGTH,
+    CONF_SCALE_FACTOR_ADDRESS,
     CONF_REG_ADDRESS,
     CONF_REG_SLAVE,
     CONF_REG_TYPE,
@@ -352,6 +353,9 @@ def _register_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=d.get(CONF_UNIT_OF_MEASUREMENT, "")): str,
             vol.Required(CONF_MULTIPLIER, default=d.get(CONF_MULTIPLIER, 1.0)): vol.Coerce(float),
             vol.Required(CONF_OFFSET, default=d.get(CONF_OFFSET, 0.0)): vol.Coerce(float),
+            vol.Required(
+                CONF_SCALE_FACTOR_ADDRESS, default=d.get(CONF_SCALE_FACTOR_ADDRESS, 0)
+            ): vol.All(vol.Coerce(int), vol.Range(min=0, max=65536)),
             vol.Required(CONF_MIN, default=d.get(CONF_MIN, 0.0)): vol.Coerce(float),
             vol.Required(CONF_MAX, default=d.get(CONF_MAX, 100.0)): vol.Coerce(float),
             vol.Required(CONF_STEP, default=d.get(CONF_STEP, 1.0)): vol.Coerce(float),
@@ -378,6 +382,7 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     reg[CONF_REG_SLAVE] = int(reg[CONF_REG_SLAVE])
     reg[CONF_REG_ADDRESS] = int(reg[CONF_REG_ADDRESS])
     reg[CONF_STRING_LENGTH] = int(reg.get(CONF_STRING_LENGTH, 8))
+    reg[CONF_SCALE_FACTOR_ADDRESS] = int(reg.get(CONF_SCALE_FACTOR_ADDRESS, 0) or 0)
     if reg[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
         reg[CONF_REG_TYPE] = REG_HOLDING
     if reg[CONF_ENT_TYPE] == ENTITY_SWITCH:
@@ -450,6 +455,19 @@ def _validate(
             width = 32 if user_input[CONF_DATA_TYPE] == "uint32" else 16
             if any(not (0 <= int(k) < width) for k in bit_labels):
                 errors[CONF_BIT_LABELS] = "bit_labels_out_of_range"
+    scale_factor_address = int(user_input.get(CONF_SCALE_FACTOR_ADDRESS, 0) or 0)
+    if scale_factor_address:
+        if scale_factor_address == int(user_input[CONF_REG_ADDRESS]):
+            errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_same_address"
+        elif user_input[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
+            errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_not_number"
+        elif is_text:
+            errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_unsupported_datatype"
+        elif value_map:
+            errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_unsupported_datatype"
+        elif bit_labels:
+            errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_unsupported_datatype"
+
     if framer == FRAMER_RTU and user_input[CONF_REG_SLAVE] == 0:
         errors[CONF_REG_SLAVE] = "slave_broadcast"
     if user_input[CONF_ENTITY_CATEGORY] == "config" and user_input[CONF_ENT_TYPE] == ENTITY_SENSOR:

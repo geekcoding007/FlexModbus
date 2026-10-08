@@ -79,6 +79,7 @@
           "unit_of_measurement": "Eenheid (bijv. °C, kWh, W)",
           "multiplier": "Vermenigvuldiger",
           "offset": "Offset",
+          "scale_factor_address": "Schaalfactor-register (optioneel)",
           "min_value": "Minimum (alleen Number)",
           "max_value": "Maximum (alleen Number)",
           "step_value": "Stapgrootte (alleen Number)",
@@ -94,6 +95,7 @@
           "slave": "Het Modbus-adres van het apparaat (vaak 1).",
           "byte_order": "Alleen van belang bij 32-bit waarden (2 registers).",
           "multiplier": "Waarde = ruwe waarde × vermenigvuldiger + offset.",
+          "scale_factor_address": "Optioneel. Voor SunSpec-achtige apparaten die de echte vermenigvuldiger in een los register opslaan (bijvoorbeeld een bijbehorend '... schaalfactor'-register, altijd een signed 16-bit waarde). Indien ingevuld wordt de uiteindelijke waarde: ruwe waarde × vermenigvuldiger × 10^(waarde van het schaalfactor-register) + offset. Het schaalfactor-register wordt elke keer meegelezen, maar nooit als eigen entiteit getoond. Laat op 0 staan om dit uit te schakelen. Geeft één van beide registers een SunSpec 'niet beschikbaar'-sentinelwaarde, dan wordt de sensor onbeschikbaar in plaats van een onzinnige waarde te tonen.",
           "register_type": "Een Number kan alleen een Holding register zijn.",
           "data_type": "Bij tekst gelden byte-volgorde, vermenigvuldiger, offset, eenheid en klassen niet.",
           "entity_category": "Diagnostiek- en configuratie-entiteiten staan op de apparaatpagina in een eigen groep en worden niet automatisch op dashboards getoond. 'Configuratie' kan alleen bij een Number.",
@@ -125,6 +127,7 @@
           "unit_of_measurement": "Eenheid (bijv. °C, kWh, W)",
           "multiplier": "Vermenigvuldiger",
           "offset": "Offset",
+          "scale_factor_address": "Schaalfactor-register (optioneel)",
           "min_value": "Minimum (alleen Number)",
           "max_value": "Maximum (alleen Number)",
           "step_value": "Stapgrootte (alleen Number)",
@@ -140,6 +143,7 @@
           "slave": "Het Modbus-adres van het apparaat (vaak 1).",
           "byte_order": "Alleen van belang bij 32-bit waarden (2 registers).",
           "multiplier": "Waarde = ruwe waarde × vermenigvuldiger + offset.",
+          "scale_factor_address": "Optioneel. Voor SunSpec-achtige apparaten die de echte vermenigvuldiger in een los register opslaan (bijvoorbeeld een bijbehorend '... schaalfactor'-register, altijd een signed 16-bit waarde). Indien ingevuld wordt de uiteindelijke waarde: ruwe waarde × vermenigvuldiger × 10^(waarde van het schaalfactor-register) + offset. Het schaalfactor-register wordt elke keer meegelezen, maar nooit als eigen entiteit getoond. Laat op 0 staan om dit uit te schakelen. Geeft één van beide registers een SunSpec 'niet beschikbaar'-sentinelwaarde, dan wordt de sensor onbeschikbaar in plaats van een onzinnige waarde te tonen.",
           "register_type": "Een Number kan alleen een Holding register zijn.",
           "data_type": "Bij tekst gelden byte-volgorde, vermenigvuldiger, offset, eenheid en klassen niet.",
           "entity_category": "Diagnostiek- en configuratie-entiteiten staan op de apparaatpagina in een eigen groep en worden niet automatisch op dashboards getoond. 'Configuratie' kan alleen bij een Number.",
@@ -194,7 +198,10 @@
       "yaml_invalid": "Kan deze YAML niet lezen: {yaml_error}",
       "float32_not_switch": "Een Switch is niet mogelijk bij datatype float32.",
       "on_off_must_differ": "De aan- en uit-waarde moeten van elkaar verschillen.",
-      "string_length_out_of_range": "De lengte moet tussen 1 en 125 registers liggen."
+      "string_length_out_of_range": "De lengte moet tussen 1 en 125 registers liggen.",
+      "scale_factor_same_address": "Het schaalfactor-register moet een ander adres hebben dan het register zelf.",
+      "scale_factor_not_number": "Een schaalfactor-register kan niet gebruikt worden bij Number of Switch; kies Sensor.",
+      "scale_factor_unsupported_datatype": "Een schaalfactor-register kan niet gecombineerd worden met tekst, een waardenlijst of bitvlaggen."
     },
     "abort": {
       "no_registers": "Er zijn nog geen registers ingesteld.",

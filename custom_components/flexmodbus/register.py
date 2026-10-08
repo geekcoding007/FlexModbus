@@ -27,6 +27,7 @@ from .const import (
     CONF_ON_VALUE,
     CONF_OFF_VALUE,
     CONF_STRING_LENGTH,
+    CONF_SCALE_FACTOR_ADDRESS,
     ENTITY_CATEGORIES,
     ENTITY_NUMBER,
     ENTITY_SENSOR,
@@ -54,6 +55,12 @@ _INT_RANGES = {
 _LEGACY_STRING_LEN = {"string16": 16, "string32": 32}
 _STRING_TYPES = {"string"}
 _WORD_COUNT = {"uint16": 1, "int16": 1, "uint32": 2, "int32": 2, "float32": 2}
+_NAN_SENTINELS = {
+    "uint16": 0xFFFF,
+    "int16": -0x8000,
+    "uint32": 0xFFFFFFFF,
+    "int32": -0x80000000,
+}
 
 _PERMUTATIONS = {
     "abcd": (0, 1, 2, 3),
@@ -73,6 +80,13 @@ def normalize_data_type(data_type: str | None) -> tuple[str, int | None]:
 
 def is_string_type(data_type: str) -> bool:
     return data_type in _STRING_TYPES or data_type in _LEGACY_STRING_LEN
+
+def is_nan_raw(data_type: str, raw: int | float) -> bool:
+    """Herken SunSpec 'niet beschikbaar'-sentinelwaarden (bijv. 0xFFFF voor uint16, -32768 voor int16)."""
+    if data_type == "float32":
+        return isinstance(raw, float) and not math.isfinite(raw)
+    sentinel = _NAN_SENTINELS.get(data_type)
+    return sentinel is not None and raw == sentinel
 
 def register_count(data_type: str, string_length: int | None = None) -> int:
     if data_type in _LEGACY_STRING_LEN:
@@ -140,6 +154,7 @@ class RegisterDef:
     on_value: int
     off_value: int
     string_length: int | None
+    scale_factor_address: int | None
     min_value: float
     max_value: float
     step: float
@@ -164,7 +179,11 @@ class RegisterDef:
     def is_switch(self) -> bool:
         return self.entity_type == ENTITY_SWITCH
 
-    def to_value(self, raw: int | float | str) -> float | str | None:
+    @property
+    def has_scale_factor(self) -> bool:
+        return self.scale_factor_address is not None
+
+    def to_value(self, raw: int | float | str, scale_factor: int | None = None) -> float | str | None:
         if isinstance(raw, str):
             return raw
         if self.value_map:
@@ -181,7 +200,10 @@ class RegisterDef:
             return ", ".join(flags) if flags else "Geen actieve vlaggen"
         if isinstance(raw, float) and not math.isfinite(raw):
             return None
-        return round((raw * self.multiplier) + self.offset, 3)
+        multiplier = self.multiplier
+        if scale_factor is not None:
+            multiplier = multiplier * (10 ** scale_factor)
+        return round((raw * multiplier) + self.offset, 3)
 
     def to_raw(self, value: float) -> float:
         return (value - self.offset) / self.multiplier
@@ -254,6 +276,22 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         if not (1 <= string_length <= 125):
             raise ValueError("de lengte van een tekstregister moet tussen 1 en 125 registers liggen")
 
+    scale_factor_address_raw = int(reg.get(CONF_SCALE_FACTOR_ADDRESS, 0) or 0)
+    scale_factor_address: int | None = scale_factor_address_raw or None
+    if scale_factor_address is not None:
+        if scale_factor_address < 1:
+            raise ValueError("het adres van het schaalfactor-register moet minimaal 1 zijn")
+        if scale_factor_address == address:
+            raise ValueError("het schaalfactor-register moet een ander adres hebben dan het register zelf")
+        if entity_type in (ENTITY_NUMBER, ENTITY_SWITCH):
+            raise ValueError("een schaalfactor-register kan niet gebruikt worden bij Number of Switch")
+        if is_text:
+            raise ValueError("een schaalfactor-register is niet mogelijk bij tekst")
+        if value_map:
+            raise ValueError("een schaalfactor-register is niet mogelijk bij een waardenlijst")
+        if bit_labels:
+            raise ValueError("een schaalfactor-register is niet mogelijk bij bitvlaggen")
+
     multiplier = float(reg.get(CONF_MULTIPLIER, 1.0)) or 1.0
 
     category = reg.get(CONF_ENTITY_CATEGORY, "none")
@@ -282,6 +320,7 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         on_value=on_value,
         off_value=off_value,
         string_length=string_length,
+        scale_factor_address=scale_factor_address,
         min_value=float(reg.get(CONF_MIN, 0.0)),
         max_value=float(reg.get(CONF_MAX, 100.0)),
         step=float(reg.get(CONF_STEP, 1.0)) or 1.0,

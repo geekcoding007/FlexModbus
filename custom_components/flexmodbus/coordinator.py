@@ -27,7 +27,7 @@ from .const import (
     REG_INPUT,
     SILENCE_ABORT_AFTER,
 )
-from .register import RegisterDef, decode_registers, encode_value
+from .register import RegisterDef, decode_registers, encode_value, is_nan_raw
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -116,6 +116,13 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
             return await self.client.read_input_registers(reg.protocol_address, count=reg.count, **kwargs)
         return await self.client.read_holding_registers(reg.protocol_address, count=reg.count, **kwargs)
 
+    async def _read_scale_factor(self, reg: RegisterDef):
+        kwargs = {self._unit_kw: reg.slave}
+        address = reg.scale_factor_address - 1
+        if reg.register_type == REG_INPUT:
+            return await self.client.read_input_registers(address, count=1, **kwargs)
+        return await self.client.read_holding_registers(address, count=1, **kwargs)
+
     def _mark_failed(self, reg: RegisterDef, reason: str) -> None:
         if reg.unique_id not in self._failing:
             self._failing.add(reg.unique_id)
@@ -179,7 +186,26 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
         except (ValueError, struct.error) as err:
             return self._fail(reg, f"ongeldige data: {err}"), True
 
-        value = reg.to_value(raw)
+        scale_factor = None
+        if reg.has_scale_factor:
+            if is_nan_raw(reg.data_type, raw):
+                return self._fail(reg, "waarde is niet beschikbaar (SunSpec NaN-sentinel)"), True
+            try:
+                sf_result = await self._read_scale_factor(reg)
+            except _COMM_ERRORS as err:
+                if not self.client.connected:
+                    raise ConnectionError("Verbinding verbroken tijdens uitlezen") from err
+                return self._fail(reg, f"schaalfactor-register kon niet gelezen worden: {err!r}"), True
+            if sf_result.isError():
+                return self._fail(reg, f"schaalfactor-register gaf een foutmelding: {sf_result}"), True
+            try:
+                scale_factor = decode_registers(sf_result.registers, "int16", "abcd")
+            except (ValueError, struct.error) as err:
+                return self._fail(reg, f"ongeldige schaalfactor-data: {err}"), True
+            if is_nan_raw("int16", scale_factor):
+                return self._fail(reg, "schaalfactor is niet beschikbaar (SunSpec NaN-sentinel)"), True
+
+        value = reg.to_value(raw, scale_factor=scale_factor)
         if value is None:
             return self._fail(reg, "waarde is geen geldig getal (NaN/oneindig)"), True
 

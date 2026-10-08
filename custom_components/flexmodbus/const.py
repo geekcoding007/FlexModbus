@@ -28,6 +28,7 @@ CONF_BIT_LABELS = "bit_labels"
 CONF_ON_VALUE = "on_value"
 CONF_OFF_VALUE = "off_value"
 CONF_STRING_LENGTH = "string_length"
+CONF_SCALE_FACTOR_ADDRESS = "scale_factor_address"
 
 ENTITY_SENSOR = "sensor"
 ENTITY_NUMBER = "number"
