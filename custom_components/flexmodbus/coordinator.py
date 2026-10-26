@@ -216,6 +216,10 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
         value = reg.to_value(raw, scale_factor=scale_factor)
         if value is None:
             return self._fail(reg, "waarde is geen geldig getal (NaN/oneindig)"), True
+        if not reg.is_plausible(value):
+            return self._fail(
+                reg, f"onmogelijke waarde {value} (toegestaan: {reg.valid_min}..{reg.valid_max})"
+            ), True
 
         self._decode_errors = 0
         self._mark_ok(reg)

@@ -29,6 +29,8 @@ from .const import (
     CONF_STRING_LENGTH,
     CONF_SCALE_FACTOR_ADDRESS,
     CONF_NAN_AS_ZERO,
+    CONF_VALID_MIN,
+    CONF_VALID_MAX,
     ENTITY_CATEGORIES,
     ENTITY_NUMBER,
     ENTITY_SENSOR,
@@ -160,6 +162,17 @@ class RegisterDef:
     min_value: float
     max_value: float
     step: float
+    valid_min: float | None = None
+    valid_max: float | None = None
+
+    def is_plausible(self, value: float | str | None) -> bool:
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            return True
+        if self.valid_min is not None and value < self.valid_min:
+            return False
+        if self.valid_max is not None and value > self.valid_max:
+            return False
+        return True
 
     @property
     def protocol_address(self) -> int:
@@ -209,6 +222,11 @@ class RegisterDef:
 
     def to_raw(self, value: float) -> float:
         return (value - self.offset) / self.multiplier
+
+def _optional_float(value: Any) -> float | None:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    return float(value)
 
 def _none_if_empty(value: Any) -> str | None:
     if value in (None, "", "none"):
@@ -296,6 +314,14 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
 
     nan_as_zero = bool(reg.get(CONF_NAN_AS_ZERO, False))
 
+    valid_min: float | None = None
+    valid_max: float | None = None
+    if entity_type == ENTITY_SENSOR and not is_text:
+        valid_min = _optional_float(reg.get(CONF_VALID_MIN))
+        valid_max = _optional_float(reg.get(CONF_VALID_MAX))
+        if valid_min is not None and valid_max is not None and valid_min >= valid_max:
+            raise ValueError("de ondergrens van het geldige bereik moet lager zijn dan de bovengrens")
+
     multiplier = float(reg.get(CONF_MULTIPLIER, 1.0)) or 1.0
 
     category = reg.get(CONF_ENTITY_CATEGORY, "none")
@@ -329,6 +355,8 @@ def parse_register(entry_id: str, reg: Mapping[str, Any]) -> RegisterDef:
         min_value=float(reg.get(CONF_MIN, 0.0)),
         max_value=float(reg.get(CONF_MAX, 100.0)),
         step=float(reg.get(CONF_STEP, 1.0)) or 1.0,
+        valid_min=valid_min,
+        valid_max=valid_max,
     )
 
 def get_raw_registers(entry: Any) -> list[dict[str, Any]]:

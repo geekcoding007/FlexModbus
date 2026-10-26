@@ -48,6 +48,8 @@ from .const import (
     CONF_STRING_LENGTH,
     CONF_SCALE_FACTOR_ADDRESS,
     CONF_NAN_AS_ZERO,
+    CONF_VALID_MIN,
+    CONF_VALID_MAX,
     CONF_REG_ADDRESS,
     CONF_REG_SLAVE,
     CONF_REG_TYPE,
@@ -360,6 +362,12 @@ def _register_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(
                 CONF_NAN_AS_ZERO, default=d.get(CONF_NAN_AS_ZERO, False)
             ): BooleanSelector(),
+            vol.Optional(
+                CONF_VALID_MIN, description={"suggested_value": d.get(CONF_VALID_MIN)}
+            ): NumberSelector(NumberSelectorConfig(step="any", mode=NumberSelectorMode.BOX)),
+            vol.Optional(
+                CONF_VALID_MAX, description={"suggested_value": d.get(CONF_VALID_MAX)}
+            ): NumberSelector(NumberSelectorConfig(step="any", mode=NumberSelectorMode.BOX)),
             vol.Required(CONF_MIN, default=d.get(CONF_MIN, 0.0)): vol.Coerce(float),
             vol.Required(CONF_MAX, default=d.get(CONF_MAX, 100.0)): vol.Coerce(float),
             vol.Required(CONF_STEP, default=d.get(CONF_STEP, 1.0)): vol.Coerce(float),
@@ -388,6 +396,14 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     reg[CONF_STRING_LENGTH] = int(reg.get(CONF_STRING_LENGTH, 8))
     reg[CONF_SCALE_FACTOR_ADDRESS] = int(reg.get(CONF_SCALE_FACTOR_ADDRESS, 0) or 0)
     reg[CONF_NAN_AS_ZERO] = bool(reg.get(CONF_NAN_AS_ZERO, False)) and bool(reg[CONF_SCALE_FACTOR_ADDRESS])
+    for key in (CONF_VALID_MIN, CONF_VALID_MAX):
+        if reg.get(key) in (None, ""):
+            reg.pop(key, None)
+        else:
+            reg[key] = float(reg[key])
+    if reg[CONF_ENT_TYPE] != ENTITY_SENSOR or is_string_type(reg[CONF_DATA_TYPE]):
+        reg.pop(CONF_VALID_MIN, None)
+        reg.pop(CONF_VALID_MAX, None)
     if reg[CONF_ENT_TYPE] in (ENTITY_NUMBER, ENTITY_SWITCH):
         reg[CONF_REG_TYPE] = REG_HOLDING
     if reg[CONF_ENT_TYPE] == ENTITY_SWITCH:
@@ -472,6 +488,17 @@ def _validate(
             errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_unsupported_datatype"
         elif bit_labels:
             errors[CONF_SCALE_FACTOR_ADDRESS] = "scale_factor_unsupported_datatype"
+
+    valid_min = user_input.get(CONF_VALID_MIN)
+    valid_max = user_input.get(CONF_VALID_MAX)
+    if (
+        valid_min not in (None, "")
+        and valid_max not in (None, "")
+        and user_input[CONF_ENT_TYPE] == ENTITY_SENSOR
+        and not is_text
+        and float(valid_min) >= float(valid_max)
+    ):
+        errors[CONF_VALID_MAX] = "valid_range_invalid"
 
     if framer == FRAMER_RTU and user_input[CONF_REG_SLAVE] == 0:
         errors[CONF_REG_SLAVE] = "slave_broadcast"

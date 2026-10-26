@@ -30,6 +30,8 @@ CONF_OFF_VALUE = "off_value"
 CONF_STRING_LENGTH = "string_length"
 CONF_SCALE_FACTOR_ADDRESS = "scale_factor_address"
 CONF_NAN_AS_ZERO = "nan_as_zero"
+CONF_VALID_MIN = "valid_min"
+CONF_VALID_MAX = "valid_max"
 
 ENTITY_SENSOR = "sensor"
 ENTITY_NUMBER = "number"
