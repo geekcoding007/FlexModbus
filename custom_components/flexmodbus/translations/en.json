@@ -12,14 +12,16 @@
           "scan_interval": "Poll interval",
           "request_delay_ms": "Delay between requests",
           "idle_close_seconds": "Close connection after inactivity",
-          "suppress_log_noise": "Hide known pymodbus noise from the log"
+          "suppress_log_noise": "Hide known pymodbus noise from the log",
+          "sunspec_device": "SunSpec device (ignore 'no data' values)"
         },
         "data_description": {
           "framer": "If your RS485 converter (Waveshare, USR, Elfin, ...) is set to protocol 'Modbus TCP to RTU', choose Modbus TCP. Choose 'RTU over TCP' only if the converter passes data through transparently (protocol 'None'/'Transparent'). Devices with their own network port use Modbus TCP.",
           "scan_interval": "How often all registers are read in one round (5-300 s). Default 15 s. If a device reacts slowly or is unstable, increase this.",
           "request_delay_ms": "Wait time on the bus between two requests (0-5000 ms). Default 350 ms. Some devices (especially busy hybrid inverters) get confused by polling too fast; increase this if you see odd values or errors around polling times.",
           "idle_close_seconds": "Seconds of inactivity before the connection closes itself (0-300). Default 0 = never close automatically; the connection stays open continuously (fastest, current behaviour). Set this to e.g. 5 if you occasionally see 'Unable to decode request' errors in the log for this device: the connection then only closes after 5 seconds of no activity, and reopens automatically on the next action. This gives less exposure to unsolicited traffic from the device than always keeping it open, with less overhead than closing immediately after every round.",
-          "suppress_log_noise": "Only hides known, harmless messages that pymodbus logs when a device sends unsolicited traffic on the line (such as 'request ask for id=3 but got id=1', 'Unable to decode frame' and 'Fatal error: protocol.data_received() call failed'). All other messages stay visible. Note: the filter applies to all of Home Assistant, including other Modbus integrations. The integration itself keeps reporting failures per register."
+          "suppress_log_noise": "Only hides known, harmless messages that pymodbus logs when a device sends unsolicited traffic on the line (such as 'request ask for id=3 but got id=1', 'Unable to decode frame' and 'Fatal error: protocol.data_received() call failed'). All other messages stay visible. Note: the filter applies to all of Home Assistant, including other Modbus integrations. The integration itself keeps reporting failures per register.",
+          "sunspec_device": "For SunSpec devices such as SolarEdge. The values 0xFFFF (unsigned) and 0x8000 (signed), which a SunSpec device sends for 'not implemented / no data' (e.g. 65535 V), are then rejected on all numeric sensors of this device instead of shown as a measurement. The last good value stays visible. Leave off for other devices, where 65535 can be a real value."
         }
       },
       "reconfigure": {
@@ -32,14 +34,16 @@
           "scan_interval": "Poll interval",
           "request_delay_ms": "Delay between requests",
           "idle_close_seconds": "Close connection after inactivity",
-          "suppress_log_noise": "Hide known pymodbus noise from the log"
+          "suppress_log_noise": "Hide known pymodbus noise from the log",
+          "sunspec_device": "SunSpec device (ignore 'no data' values)"
         },
         "data_description": {
           "framer": "If your RS485 converter (Waveshare, USR, Elfin, ...) is set to protocol 'Modbus TCP to RTU', choose Modbus TCP. Choose 'RTU over TCP' only if the converter passes data through transparently (protocol 'None'/'Transparent'). Devices with their own network port use Modbus TCP.",
           "scan_interval": "How often all registers are read in one round (5-300 s). Default 15 s. If a device reacts slowly or is unstable, increase this.",
           "request_delay_ms": "Wait time on the bus between two requests (0-5000 ms). Default 350 ms. Some devices (especially busy hybrid inverters) get confused by polling too fast; increase this if you see odd values or errors around polling times.",
           "idle_close_seconds": "Seconds of inactivity before the connection closes itself (0-300). Default 0 = never close automatically; the connection stays open continuously (fastest, current behaviour). Set this to e.g. 5 if you occasionally see 'Unable to decode request' errors in the log for this device: the connection then only closes after 5 seconds of no activity, and reopens automatically on the next action. This gives less exposure to unsolicited traffic from the device than always keeping it open, with less overhead than closing immediately after every round.",
-          "suppress_log_noise": "Only hides known, harmless messages that pymodbus logs when a device sends unsolicited traffic on the line (such as 'request ask for id=3 but got id=1', 'Unable to decode frame' and 'Fatal error: protocol.data_received() call failed'). All other messages stay visible. Note: the filter applies to all of Home Assistant, including other Modbus integrations. The integration itself keeps reporting failures per register."
+          "suppress_log_noise": "Only hides known, harmless messages that pymodbus logs when a device sends unsolicited traffic on the line (such as 'request ask for id=3 but got id=1', 'Unable to decode frame' and 'Fatal error: protocol.data_received() call failed'). All other messages stay visible. Note: the filter applies to all of Home Assistant, including other Modbus integrations. The integration itself keeps reporting failures per register.",
+          "sunspec_device": "For SunSpec devices such as SolarEdge. The values 0xFFFF (unsigned) and 0x8000 (signed), which a SunSpec device sends for 'not implemented / no data' (e.g. 65535 V), are then rejected on all numeric sensors of this device instead of shown as a measurement. The last good value stays visible. Leave off for other devices, where 65535 can be a real value."
         }
       }
     },
@@ -80,7 +84,7 @@
           "multiplier": "Multiplier",
           "offset": "Offset",
           "scale_factor_address": "Scale-factor register (optional)",
-          "nan_as_zero": "Show 0 instead of unavailable (scale factor only)",
+          "nan_as_zero": "Show 0 for 'no data' (scale factor only)",
           "min_value": "Minimum (Number only)",
           "max_value": "Maximum (Number only)",
           "step_value": "Step size (Number only)",
@@ -98,8 +102,8 @@
           "slave": "The Modbus address of the device (often 1).",
           "byte_order": "Only relevant for 32-bit values (2 registers).",
           "multiplier": "Value = raw value × multiplier + offset.",
-          "scale_factor_address": "Optional. For SunSpec-style devices that store the real multiplier in a separate register (e.g. a paired '... scale factor' register, always a signed 16-bit value). When set, the final value becomes: raw value × multiplier × 10^(scale-factor register's value) + offset. The scale-factor register itself is read every poll but never shown as its own entity. Leave at 0 to disable. If either register reads a SunSpec 'not available' sentinel value, the sensor becomes unavailable instead of showing a nonsense number.",
-          "nan_as_zero": "Only used together with a scale-factor register. When enabled, a SunSpec 'not available' sentinel on either register produces 0 instead of making the sensor unavailable - useful for a quantity like current or power that is genuinely zero when idle (e.g. an inverter at night) rather than truly unknown.",
+          "scale_factor_address": "Optional. For SunSpec-style devices that store the real multiplier in a separate register (e.g. a paired '... scale factor' register, always a signed 16-bit value). When set, the final value becomes: raw value × multiplier × 10^(scale-factor register's value) + offset. The scale-factor register itself is read every poll but never shown as its own entity. Leave at 0 to disable. If either register reads a SunSpec 'not available' sentinel value, the reading is ignored and the last good value stays visible instead of a nonsense number (a scale factor outside -10..10 is also ignored). Value and scale factor are read in one request when their addresses are close together.",
+          "nan_as_zero": "Only used together with a scale-factor register. When enabled, a SunSpec 'not available' sentinel on either register produces 0 instead of keeping the last value - useful for a quantity like current or power that is genuinely zero when idle (e.g. an inverter at night) rather than truly unknown.",
           "register_type": "A Number can only be a Holding register.",
           "data_type": "For text, byte order, multiplier, offset, unit and classes do not apply.",
           "entity_category": "Diagnostic and configuration entities are shown in their own group on the device page and are not added to dashboards automatically. 'Configuration' is only available for a Number.",
@@ -108,7 +112,7 @@
           "on_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
           "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
           "string_length": "Only for data type 'Text / String'. Number of registers this text occupies (1-125), e.g. 7 for a 14-character version string, or 16/32 for the former fixed SunSpec lengths.",
-          "valid_min": "Only for Sensor. Readings below this value are rejected as faulty data: the previous value is kept for a few polls, after which the sensor becomes unavailable. Leave empty to disable. Not the same as 'Minimum' (Number only).",
+          "valid_min": "Only for Sensor. Readings below this value are rejected as faulty data: the last good value stays visible until a valid reading arrives. Leave empty to disable. Not the same as 'Minimum' (Number only).",
           "valid_max": "Only for Sensor. Readings above this value are rejected as faulty data (see plausible minimum), e.g. 100 for a daily energy counter in kWh. Leave empty to disable. Not the same as 'Maximum' (Number only)."
         }
       },
@@ -134,7 +138,7 @@
           "multiplier": "Multiplier",
           "offset": "Offset",
           "scale_factor_address": "Scale-factor register (optional)",
-          "nan_as_zero": "Show 0 instead of unavailable (scale factor only)",
+          "nan_as_zero": "Show 0 for 'no data' (scale factor only)",
           "min_value": "Minimum (Number only)",
           "max_value": "Maximum (Number only)",
           "step_value": "Step size (Number only)",
@@ -152,8 +156,8 @@
           "slave": "The Modbus address of the device (often 1).",
           "byte_order": "Only relevant for 32-bit values (2 registers).",
           "multiplier": "Value = raw value × multiplier + offset.",
-          "scale_factor_address": "Optional. For SunSpec-style devices that store the real multiplier in a separate register (e.g. a paired '... scale factor' register, always a signed 16-bit value). When set, the final value becomes: raw value × multiplier × 10^(scale-factor register's value) + offset. The scale-factor register itself is read every poll but never shown as its own entity. Leave at 0 to disable. If either register reads a SunSpec 'not available' sentinel value, the sensor becomes unavailable instead of showing a nonsense number.",
-          "nan_as_zero": "Only used together with a scale-factor register. When enabled, a SunSpec 'not available' sentinel on either register produces 0 instead of making the sensor unavailable - useful for a quantity like current or power that is genuinely zero when idle (e.g. an inverter at night) rather than truly unknown.",
+          "scale_factor_address": "Optional. For SunSpec-style devices that store the real multiplier in a separate register (e.g. a paired '... scale factor' register, always a signed 16-bit value). When set, the final value becomes: raw value × multiplier × 10^(scale-factor register's value) + offset. The scale-factor register itself is read every poll but never shown as its own entity. Leave at 0 to disable. If either register reads a SunSpec 'not available' sentinel value, the reading is ignored and the last good value stays visible instead of a nonsense number (a scale factor outside -10..10 is also ignored). Value and scale factor are read in one request when their addresses are close together.",
+          "nan_as_zero": "Only used together with a scale-factor register. When enabled, a SunSpec 'not available' sentinel on either register produces 0 instead of keeping the last value - useful for a quantity like current or power that is genuinely zero when idle (e.g. an inverter at night) rather than truly unknown.",
           "register_type": "A Number can only be a Holding register.",
           "data_type": "For text, byte order, multiplier, offset, unit and classes do not apply.",
           "entity_category": "Diagnostic and configuration entities are shown in their own group on the device page and are not added to dashboards automatically. 'Configuration' is only available for a Number.",
@@ -162,7 +166,7 @@
           "on_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
           "off_value": "Only for Switch. The raw register value that means 'on', and the one that means 'off'. Default 1/0; some devices use other codes (e.g. 0x000A/0x0005).",
           "string_length": "Only for data type 'Text / String'. Number of registers this text occupies (1-125), e.g. 7 for a 14-character version string, or 16/32 for the former fixed SunSpec lengths.",
-          "valid_min": "Only for Sensor. Readings below this value are rejected as faulty data: the previous value is kept for a few polls, after which the sensor becomes unavailable. Leave empty to disable. Not the same as 'Minimum' (Number only).",
+          "valid_min": "Only for Sensor. Readings below this value are rejected as faulty data: the last good value stays visible until a valid reading arrives. Leave empty to disable. Not the same as 'Minimum' (Number only).",
           "valid_max": "Only for Sensor. Readings above this value are rejected as faulty data (see plausible minimum), e.g. 100 for a daily energy counter in kWh. Leave empty to disable. Not the same as 'Maximum' (Number only)."
         }
       },

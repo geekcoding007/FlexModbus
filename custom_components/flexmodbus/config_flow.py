@@ -57,6 +57,7 @@ from .const import (
     CONF_STATE_CLASS,
     CONF_STEP,
     CONF_SUPPRESS_LOG_NOISE,
+    CONF_SUNSPEC_DEVICE,
     CONF_VALUE_MAP,
     CONF_BIT_LABELS,
     CONNECT_TIMEOUT,
@@ -144,6 +145,9 @@ def _connection_schema(defaults: dict[str, Any], with_name: bool) -> vol.Schema:
     fields[
         vol.Required(CONF_SUPPRESS_LOG_NOISE, default=defaults.get(CONF_SUPPRESS_LOG_NOISE, False))
     ] = BooleanSelector()
+    fields[
+        vol.Required(CONF_SUNSPEC_DEVICE, default=defaults.get(CONF_SUNSPEC_DEVICE, False))
+    ] = BooleanSelector()
     return vol.Schema(fields)
 
 class ModbusConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -178,6 +182,7 @@ class ModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_REQUEST_DELAY: int(user_input[CONF_REQUEST_DELAY]),
                         CONF_IDLE_CLOSE_SECONDS: int(user_input[CONF_IDLE_CLOSE_SECONDS]),
                         CONF_SUPPRESS_LOG_NOISE: bool(user_input[CONF_SUPPRESS_LOG_NOISE]),
+                        CONF_SUNSPEC_DEVICE: bool(user_input[CONF_SUNSPEC_DEVICE]),
                     },
                     options={CONF_REGISTERS: []},
                 )
@@ -217,6 +222,7 @@ class ModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_REQUEST_DELAY: int(user_input[CONF_REQUEST_DELAY]),
                         CONF_IDLE_CLOSE_SECONDS: int(user_input[CONF_IDLE_CLOSE_SECONDS]),
                         CONF_SUPPRESS_LOG_NOISE: bool(user_input[CONF_SUPPRESS_LOG_NOISE]),
+                        CONF_SUNSPEC_DEVICE: bool(user_input[CONF_SUNSPEC_DEVICE]),
                     },
                 )
                 return self.async_abort(reason="reconfigure_successful")
@@ -229,6 +235,7 @@ class ModbusConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_REQUEST_DELAY: entry.data.get(CONF_REQUEST_DELAY, DEFAULT_REQUEST_DELAY),
             CONF_IDLE_CLOSE_SECONDS: entry.data.get(CONF_IDLE_CLOSE_SECONDS, DEFAULT_IDLE_CLOSE_SECONDS),
             CONF_SUPPRESS_LOG_NOISE: entry.data.get(CONF_SUPPRESS_LOG_NOISE, False),
+            CONF_SUNSPEC_DEVICE: entry.data.get(CONF_SUNSPEC_DEVICE, False),
         }
         return self.async_show_form(
             step_id="reconfigure", data_schema=_connection_schema(defaults, with_name=False), errors=errors

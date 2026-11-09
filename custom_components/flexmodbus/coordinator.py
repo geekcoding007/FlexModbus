@@ -19,13 +19,17 @@ from .const import (
     CONF_PERSISTENT_CONNECTION,
     CONF_REQUEST_DELAY,
     CONF_SCAN_INTERVAL,
+    CONF_SUNSPEC_DEVICE,
     DEFAULT_IDLE_CLOSE_SECONDS,
     DEFAULT_REQUEST_DELAY,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    MAX_COMBINED_READ_SPAN,
     MAX_TOLERATED_MISSES,
     REG_INPUT,
     SILENCE_ABORT_AFTER,
+    SUNSPEC_SF_MAX,
+    SUNSPEC_SF_MIN,
 )
 from .register import RegisterDef, decode_registers, encode_value, is_nan_raw
 
@@ -37,13 +41,14 @@ def _unit_kwarg(client: AsyncModbusTcpClient) -> str:
     params = inspect.signature(client.read_holding_registers).parameters
     return "device_id" if "device_id" in params else "slave"
 
-def _is_foreign(result, reg: RegisterDef) -> bool:
+def _is_foreign(result, reg: RegisterDef, count: int | None = None) -> bool:
+    expected = reg.count if count is None else count
     dev = getattr(result, "dev_id", None)
     if dev is None:
         dev = getattr(result, "slave_id", None)
     if dev not in (None, 0) and reg.slave not in (0, 255) and dev != reg.slave:
         return True
-    if not result.isError() and len(result.registers) != reg.count:
+    if not result.isError() and len(result.registers) != expected:
         return True
     return False
 
@@ -84,6 +89,8 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
         self._misses: dict[str, int] = {}
         self._ever_ok: set[str] = set()
         self._decode_errors = 0
+        self._sunspec = bool(entry.data.get(CONF_SUNSPEC_DEVICE, False))
+        self._rejecting: set[str] = set()
 
     def _cancel_idle_close(self) -> None:
         if self._idle_close_handle is not None:
@@ -110,18 +117,28 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
         if not self.client.connected:
             raise ConnectionError(f"Geen verbinding met {self._host}")
 
-    async def _read(self, reg: RegisterDef):
+    async def _read(self, reg: RegisterDef, start: int | None = None, count: int | None = None):
+        start = reg.protocol_address if start is None else start
+        count = reg.count if count is None else count
         kwargs = {self._unit_kw: reg.slave}
         if reg.register_type == REG_INPUT:
-            return await self.client.read_input_registers(reg.protocol_address, count=reg.count, **kwargs)
-        return await self.client.read_holding_registers(reg.protocol_address, count=reg.count, **kwargs)
+            return await self.client.read_input_registers(start, count=count, **kwargs)
+        return await self.client.read_holding_registers(start, count=count, **kwargs)
 
-    async def _read_scale_factor(self, reg: RegisterDef):
-        kwargs = {self._unit_kw: reg.slave}
-        address = reg.scale_factor_address - 1
-        if reg.register_type == REG_INPUT:
-            return await self.client.read_input_registers(address, count=1, **kwargs)
-        return await self.client.read_holding_registers(address, count=1, **kwargs)
+    @staticmethod
+    def _combined_plan(reg: RegisterDef) -> tuple[int, int, int, int] | None:
+        """Waarde en schaalfactor in een verzoek lezen, zodat ze altijd bij elkaar horen.
+
+        Geeft (start, aantal, offset waarde, offset schaalfactor), of None als er geen
+        schaalfactor is of de registers te ver uit elkaar liggen."""
+        if not reg.has_scale_factor:
+            return None
+        sf = reg.scale_factor_address - 1
+        low = min(reg.protocol_address, sf)
+        high = max(reg.protocol_address + reg.count, sf + 1)
+        if high - low > MAX_COMBINED_READ_SPAN:
+            return None
+        return low, high - low, reg.protocol_address - low, sf - low
 
     def _mark_failed(self, reg: RegisterDef, reason: str) -> None:
         if reg.unique_id not in self._failing:
@@ -133,6 +150,7 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
 
     def _mark_ok(self, reg: RegisterDef) -> None:
         self._misses.pop(reg.unique_id, None)
+        self._rejecting.discard(reg.unique_id)
         self._ever_ok.add(reg.unique_id)
         if reg.unique_id in self._failing:
             self._failing.discard(reg.unique_id)
@@ -151,10 +169,34 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
         self._mark_failed(reg, reason)
         return None
 
-    async def _read_value(self, reg: RegisterDef) -> tuple[float | str | None, bool]:
+    def _reject(self, reg: RegisterDef, reason: str, quiet: bool = False) -> float | str | None:
+        """Ongeldige inhoud (sentinel, onmogelijke waarde): de laatste goede waarde blijft staan."""
+        previous = (self.data or {}).get(reg.unique_id) if self.last_update_success else None
+        if reg.unique_id not in self._rejecting:
+            self._rejecting.add(reg.unique_id)
+            _LOGGER.log(
+                logging.DEBUG if quiet else logging.WARNING,
+                "Register '%s' (slave %s, adres %s): ongeldige waarde genegeerd: %s",
+                reg.name, reg.slave, reg.address, reason,
+            )
+        if previous is not None:
+            return previous
+        if not quiet:
+            self._mark_failed(reg, reason)
+        return None
+
+    def _zero(self, reg: RegisterDef) -> float:
+        self._decode_errors = 0
+        self._mark_ok(reg)
+        return 0.0
+
+    async def _request(
+        self, reg: RegisterDef, start: int, count: int, answered: bool, label: str = ""
+    ) -> tuple[object | None, tuple[float | str | None, bool] | None]:
+        """Een leesverzoek; geeft (antwoord, None) of (None, (waarde, answered)) als het mislukt."""
         for _ in range(2):
             try:
-                result = await self._read(reg)
+                result = await self._read(reg, start, count)
             except _COMM_ERRORS as err:
                 if not self.client.connected:
                     raise ConnectionError("Verbinding verbroken tijdens uitlezen") from err
@@ -166,58 +208,79 @@ class ModbusCoordinator(DataUpdateCoordinator[dict[str, float | str | None]]):
                         raise ConnectionError(
                             "Herhaaldelijk onleesbare Modbus-frames ontvangen; verbinding wordt opnieuw opgebouwd"
                         ) from err
-                return self._fail(reg, repr(err)), False
-            if not _is_foreign(result, reg):
-                break
+                return None, (self._fail(reg, f"{label}{err!r}"), answered)
+            if not _is_foreign(result, reg, count):
+                return result, None
             _LOGGER.debug(
                 "Register '%s': antwoord genegeerd dat niet bij het verzoek past "
                 "(slave %s, %s registers; gevraagd: slave %s, %s registers)",
                 reg.name, getattr(result, "dev_id", getattr(result, "slave_id", "?")),
-                len(getattr(result, "registers", []) or []), reg.slave, reg.count,
+                len(getattr(result, "registers", []) or []), reg.slave, count,
             )
-        else:
-            return self._fail(reg, "alleen antwoorden ontvangen die niet bij het verzoek passen (ander slave-ID of ander aantal registers)"), False
+        return None, (
+            self._fail(
+                reg,
+                f"{label}alleen antwoorden ontvangen die niet bij het verzoek passen "
+                "(ander slave-ID of ander aantal registers)",
+            ),
+            answered,
+        )
 
+    async def _read_value(self, reg: RegisterDef) -> tuple[float | str | None, bool]:
+        plan = self._combined_plan(reg)
+        start, count, value_offset, sf_offset = plan or (reg.protocol_address, reg.count, 0, None)
+
+        result, failure = await self._request(reg, start, count, answered=False)
+        if failure is not None:
+            return failure
         if result.isError():
             return self._fail(reg, str(result)), True
 
         try:
-            raw = decode_registers(result.registers, reg.data_type, reg.byte_order, reg.string_length)
+            raw = decode_registers(
+                result.registers[value_offset:value_offset + reg.count],
+                reg.data_type, reg.byte_order, reg.string_length,
+            )
         except (ValueError, struct.error) as err:
             return self._fail(reg, f"ongeldige data: {err}"), True
 
+        checks_sentinel = reg.has_scale_factor or (self._sunspec and reg.is_plain_numeric_sensor)
+        if checks_sentinel and is_nan_raw(reg.data_type, raw):
+            if reg.nan_as_zero:
+                return self._zero(reg), True
+            return self._reject(reg, "waarde is niet beschikbaar (SunSpec NaN-sentinel)", quiet=True), True
+
         scale_factor = None
         if reg.has_scale_factor:
-            if is_nan_raw(reg.data_type, raw):
-                if reg.nan_as_zero:
-                    self._decode_errors = 0
-                    self._mark_ok(reg)
-                    return 0.0, True
-                return self._fail(reg, "waarde is niet beschikbaar (SunSpec NaN-sentinel)"), True
+            if sf_offset is not None:
+                sf_registers = result.registers[sf_offset:sf_offset + 1]
+            else:
+                sf_result, failure = await self._request(
+                    reg, reg.scale_factor_address - 1, 1, answered=True, label="schaalfactor-register: "
+                )
+                if failure is not None:
+                    return failure
+                if sf_result.isError():
+                    return self._fail(reg, f"schaalfactor-register gaf een foutmelding: {sf_result}"), True
+                sf_registers = sf_result.registers
             try:
-                sf_result = await self._read_scale_factor(reg)
-            except _COMM_ERRORS as err:
-                if not self.client.connected:
-                    raise ConnectionError("Verbinding verbroken tijdens uitlezen") from err
-                return self._fail(reg, f"schaalfactor-register kon niet gelezen worden: {err!r}"), True
-            if sf_result.isError():
-                return self._fail(reg, f"schaalfactor-register gaf een foutmelding: {sf_result}"), True
-            try:
-                scale_factor = decode_registers(sf_result.registers, "int16", "abcd")
+                scale_factor = decode_registers(sf_registers, "int16", "abcd")
             except (ValueError, struct.error) as err:
                 return self._fail(reg, f"ongeldige schaalfactor-data: {err}"), True
             if is_nan_raw("int16", scale_factor):
                 if reg.nan_as_zero:
-                    self._decode_errors = 0
-                    self._mark_ok(reg)
-                    return 0.0, True
-                return self._fail(reg, "schaalfactor is niet beschikbaar (SunSpec NaN-sentinel)"), True
+                    return self._zero(reg), True
+                return self._reject(reg, "schaalfactor is niet beschikbaar (SunSpec NaN-sentinel)", quiet=True), True
+            if not SUNSPEC_SF_MIN <= scale_factor <= SUNSPEC_SF_MAX:
+                return self._reject(
+                    reg, f"schaalfactor {scale_factor} valt buiten het SunSpec-bereik {SUNSPEC_SF_MIN}..{SUNSPEC_SF_MAX}"
+                ), True
 
         value = reg.to_value(raw, scale_factor=scale_factor)
         if value is None:
-            return self._fail(reg, "waarde is geen geldig getal (NaN/oneindig)"), True
+            return self._reject(reg, "waarde is geen geldig getal (NaN/oneindig)"), True
         if not reg.is_plausible(value):
-            return self._fail(
+            return self._reject(
                 reg, f"onmogelijke waarde {value} (toegestaan: {reg.valid_min}..{reg.valid_max})"
             ), True
 

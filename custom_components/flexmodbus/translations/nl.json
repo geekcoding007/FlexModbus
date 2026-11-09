@@ -12,14 +12,16 @@
           "scan_interval": "Poll-interval",
           "request_delay_ms": "Pauze tussen verzoeken",
           "idle_close_seconds": "Verbinding sluiten na inactiviteit",
-          "suppress_log_noise": "Bekende pymodbus-storingsmeldingen uit het log houden"
+          "suppress_log_noise": "Bekende pymodbus-storingsmeldingen uit het log houden",
+          "sunspec_device": "SunSpec-apparaat ('geen data'-waarden negeren)"
         },
         "data_description": {
           "framer": "Staat je RS485-converter (Waveshare, USR, Elfin, ...) op protocol 'Modbus TCP to RTU', kies dan Modbus TCP. Kies 'RTU over TCP' alleen als de converter transparant doorgeeft (protocol 'None'/'Transparent'). Apparaten met een eigen netwerkaansluiting gebruiken Modbus TCP.",
           "scan_interval": "Hoe vaak alle registers in één ronde worden uitgelezen (5-300 s). Standaard 15 s. Reageert een apparaat traag of onstabiel, zet dit dan hoger.",
           "request_delay_ms": "Wachttijd op de bus tussen twee verzoeken (0-5000 ms). Standaard 350 ms. Sommige apparaten (vooral drukbezette hybride omvormers) raken in de war van te snel achter elkaar pollen; verhoog dit als je rondom het pollen rare waarden of storingen ziet.",
           "idle_close_seconds": "Aantal seconden zonder activiteit voordat de verbinding zelf wordt gesloten (0-300). Standaard 0 = nooit automatisch sluiten; de verbinding blijft dan continu openstaan (snelst, huidig gedrag). Zet dit op bijvoorbeeld 5 als je bij dit apparaat af en toe 'Unable to decode request'-meldingen in het log ziet: de verbinding gaat dan pas dicht als er 5 seconden niets is gebeurd, en wordt bij de volgende actie automatisch weer opgebouwd. Dit geeft minder blootstelling aan ongevraagd verkeer van het apparaat dan altijd openhouden, met minder overhead dan na elke ronde meteen sluiten.",
-          "suppress_log_noise": "Verbergt alleen bekende, onschadelijke meldingen die pymodbus logt als een apparaat ongevraagd eigen verkeer op de lijn stuurt (zoals 'request ask for id=3 but got id=1', 'Unable to decode frame' en de melding 'Fatal error: protocol.data_received() call failed'). Alle andere meldingen blijven zichtbaar. Let op: het filter geldt voor heel Home Assistant, dus ook voor andere Modbus-integraties. De integratie zelf blijft storingen per register melden."
+          "suppress_log_noise": "Verbergt alleen bekende, onschadelijke meldingen die pymodbus logt als een apparaat ongevraagd eigen verkeer op de lijn stuurt (zoals 'request ask for id=3 but got id=1', 'Unable to decode frame' en de melding 'Fatal error: protocol.data_received() call failed'). Alle andere meldingen blijven zichtbaar. Let op: het filter geldt voor heel Home Assistant, dus ook voor andere Modbus-integraties. De integratie zelf blijft storingen per register melden.",
+          "sunspec_device": "Voor SunSpec-apparaten zoals SolarEdge. De waarden 0xFFFF (unsigned) en 0x8000 (signed), die een SunSpec-apparaat stuurt voor 'niet beschikbaar / geen data' (bijvoorbeeld 65535 V), worden dan bij alle numerieke sensoren van dit apparaat genegeerd in plaats van als meting getoond. De laatste goede waarde blijft zichtbaar. Laat uit bij andere apparaten, waar 65535 een echte waarde kan zijn."
         }
       },
       "reconfigure": {
@@ -32,14 +34,16 @@
           "scan_interval": "Poll-interval",
           "request_delay_ms": "Pauze tussen verzoeken",
           "idle_close_seconds": "Verbinding sluiten na inactiviteit",
-          "suppress_log_noise": "Bekende pymodbus-storingsmeldingen uit het log houden"
+          "suppress_log_noise": "Bekende pymodbus-storingsmeldingen uit het log houden",
+          "sunspec_device": "SunSpec-apparaat ('geen data'-waarden negeren)"
         },
         "data_description": {
           "framer": "Staat je RS485-converter (Waveshare, USR, Elfin, ...) op protocol 'Modbus TCP to RTU', kies dan Modbus TCP. Kies 'RTU over TCP' alleen als de converter transparant doorgeeft (protocol 'None'/'Transparent'). Apparaten met een eigen netwerkaansluiting gebruiken Modbus TCP.",
           "scan_interval": "Hoe vaak alle registers in één ronde worden uitgelezen (5-300 s). Standaard 15 s. Reageert een apparaat traag of onstabiel, zet dit dan hoger.",
           "request_delay_ms": "Wachttijd op de bus tussen twee verzoeken (0-5000 ms). Standaard 350 ms. Sommige apparaten (vooral drukbezette hybride omvormers) raken in de war van te snel achter elkaar pollen; verhoog dit als je rondom het pollen rare waarden of storingen ziet.",
           "idle_close_seconds": "Aantal seconden zonder activiteit voordat de verbinding zelf wordt gesloten (0-300). Standaard 0 = nooit automatisch sluiten; de verbinding blijft dan continu openstaan (snelst, huidig gedrag). Zet dit op bijvoorbeeld 5 als je bij dit apparaat af en toe 'Unable to decode request'-meldingen in het log ziet: de verbinding gaat dan pas dicht als er 5 seconden niets is gebeurd, en wordt bij de volgende actie automatisch weer opgebouwd. Dit geeft minder blootstelling aan ongevraagd verkeer van het apparaat dan altijd openhouden, met minder overhead dan na elke ronde meteen sluiten.",
-          "suppress_log_noise": "Verbergt alleen bekende, onschadelijke meldingen die pymodbus logt als een apparaat ongevraagd eigen verkeer op de lijn stuurt (zoals 'request ask for id=3 but got id=1', 'Unable to decode frame' en de melding 'Fatal error: protocol.data_received() call failed'). Alle andere meldingen blijven zichtbaar. Let op: het filter geldt voor heel Home Assistant, dus ook voor andere Modbus-integraties. De integratie zelf blijft storingen per register melden."
+          "suppress_log_noise": "Verbergt alleen bekende, onschadelijke meldingen die pymodbus logt als een apparaat ongevraagd eigen verkeer op de lijn stuurt (zoals 'request ask for id=3 but got id=1', 'Unable to decode frame' en de melding 'Fatal error: protocol.data_received() call failed'). Alle andere meldingen blijven zichtbaar. Let op: het filter geldt voor heel Home Assistant, dus ook voor andere Modbus-integraties. De integratie zelf blijft storingen per register melden.",
+          "sunspec_device": "Voor SunSpec-apparaten zoals SolarEdge. De waarden 0xFFFF (unsigned) en 0x8000 (signed), die een SunSpec-apparaat stuurt voor 'niet beschikbaar / geen data' (bijvoorbeeld 65535 V), worden dan bij alle numerieke sensoren van dit apparaat genegeerd in plaats van als meting getoond. De laatste goede waarde blijft zichtbaar. Laat uit bij andere apparaten, waar 65535 een echte waarde kan zijn."
         }
       }
     },
@@ -80,7 +84,7 @@
           "multiplier": "Vermenigvuldiger",
           "offset": "Offset",
           "scale_factor_address": "Schaalfactor-register (optioneel)",
-          "nan_as_zero": "Toon 0 in plaats van onbeschikbaar (alleen bij schaalfactor)",
+          "nan_as_zero": "Toon 0 bij 'geen data' (alleen bij schaalfactor)",
           "min_value": "Minimum (alleen Number)",
           "max_value": "Maximum (alleen Number)",
           "step_value": "Stapgrootte (alleen Number)",
@@ -98,8 +102,8 @@
           "slave": "Het Modbus-adres van het apparaat (vaak 1).",
           "byte_order": "Alleen van belang bij 32-bit waarden (2 registers).",
           "multiplier": "Waarde = ruwe waarde × vermenigvuldiger + offset.",
-          "scale_factor_address": "Optioneel. Voor SunSpec-achtige apparaten die de echte vermenigvuldiger in een los register opslaan (bijvoorbeeld een bijbehorend '... schaalfactor'-register, altijd een signed 16-bit waarde). Indien ingevuld wordt de uiteindelijke waarde: ruwe waarde × vermenigvuldiger × 10^(waarde van het schaalfactor-register) + offset. Het schaalfactor-register wordt elke keer meegelezen, maar nooit als eigen entiteit getoond. Laat op 0 staan om dit uit te schakelen. Geeft één van beide registers een SunSpec 'niet beschikbaar'-sentinelwaarde, dan wordt de sensor onbeschikbaar in plaats van een onzinnige waarde te tonen.",
-          "nan_as_zero": "Alleen van toepassing samen met een schaalfactor-register. Staat deze aan, dan levert een SunSpec 'niet beschikbaar'-sentinelwaarde op één van beide registers 0 op in plaats van dat de sensor onbeschikbaar wordt — handig voor een grootheid als stroom of vermogen die écht nul is als het apparaat stilstaat (bijvoorbeeld een omvormer 's nachts), in plaats van werkelijk onbekend.",
+          "scale_factor_address": "Optioneel. Voor SunSpec-achtige apparaten die de echte vermenigvuldiger in een los register opslaan (bijvoorbeeld een bijbehorend '... schaalfactor'-register, altijd een signed 16-bit waarde). Indien ingevuld wordt de uiteindelijke waarde: ruwe waarde × vermenigvuldiger × 10^(waarde van het schaalfactor-register) + offset. Het schaalfactor-register wordt elke keer meegelezen, maar nooit als eigen entiteit getoond. Laat op 0 staan om dit uit te schakelen. Geeft één van beide registers een SunSpec 'niet beschikbaar'-sentinelwaarde, dan wordt die uitlezing genegeerd en blijft de laatste goede waarde zichtbaar in plaats van een onzinnige waarde (een schaalfactor buiten -10..10 wordt ook genegeerd). Waarde en schaalfactor worden in één verzoek gelezen als de adressen dicht bij elkaar liggen.",
+          "nan_as_zero": "Alleen van toepassing samen met een schaalfactor-register. Staat deze aan, dan levert een SunSpec 'niet beschikbaar'-sentinelwaarde op één van beide registers 0 op in plaats van de laatste waarde vast te houden — handig voor een grootheid als stroom of vermogen die écht nul is als het apparaat stilstaat (bijvoorbeeld een omvormer 's nachts), in plaats van werkelijk onbekend.",
           "register_type": "Een Number kan alleen een Holding register zijn.",
           "data_type": "Bij tekst gelden byte-volgorde, vermenigvuldiger, offset, eenheid en klassen niet.",
           "entity_category": "Diagnostiek- en configuratie-entiteiten staan op de apparaatpagina in een eigen groep en worden niet automatisch op dashboards getoond. 'Configuratie' kan alleen bij een Number.",
@@ -108,7 +112,7 @@
           "on_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
           "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
           "string_length": "Alleen bij datatype 'Tekst / String'. Aantal registers dat deze tekst inneemt (1-125), bijvoorbeeld 7 voor een 14-tekens versienummer, of 16/32 voor de vroegere vaste SunSpec-lengtes.",
-          "valid_min": "Alleen voor Sensor. Een uitlezing onder deze waarde wordt als foute data afgewezen: de vorige waarde blijft een paar polls staan, daarna wordt de sensor onbeschikbaar. Leeg laten = uit. Niet hetzelfde als 'Minimum' (alleen Number).",
+          "valid_min": "Alleen voor Sensor. Een uitlezing onder deze waarde wordt als foute data afgewezen: de laatste goede waarde blijft zichtbaar tot er weer een geldige uitlezing is. Leeg laten = uit. Niet hetzelfde als 'Minimum' (alleen Number).",
           "valid_max": "Alleen voor Sensor. Een uitlezing boven deze waarde wordt als foute data afgewezen (zie plausibel minimum), bijvoorbeeld 100 voor een dagteller in kWh. Leeg laten = uit. Niet hetzelfde als 'Maximum' (alleen Number)."
         }
       },
@@ -134,7 +138,7 @@
           "multiplier": "Vermenigvuldiger",
           "offset": "Offset",
           "scale_factor_address": "Schaalfactor-register (optioneel)",
-          "nan_as_zero": "Toon 0 in plaats van onbeschikbaar (alleen bij schaalfactor)",
+          "nan_as_zero": "Toon 0 bij 'geen data' (alleen bij schaalfactor)",
           "min_value": "Minimum (alleen Number)",
           "max_value": "Maximum (alleen Number)",
           "step_value": "Stapgrootte (alleen Number)",
@@ -152,8 +156,8 @@
           "slave": "Het Modbus-adres van het apparaat (vaak 1).",
           "byte_order": "Alleen van belang bij 32-bit waarden (2 registers).",
           "multiplier": "Waarde = ruwe waarde × vermenigvuldiger + offset.",
-          "scale_factor_address": "Optioneel. Voor SunSpec-achtige apparaten die de echte vermenigvuldiger in een los register opslaan (bijvoorbeeld een bijbehorend '... schaalfactor'-register, altijd een signed 16-bit waarde). Indien ingevuld wordt de uiteindelijke waarde: ruwe waarde × vermenigvuldiger × 10^(waarde van het schaalfactor-register) + offset. Het schaalfactor-register wordt elke keer meegelezen, maar nooit als eigen entiteit getoond. Laat op 0 staan om dit uit te schakelen. Geeft één van beide registers een SunSpec 'niet beschikbaar'-sentinelwaarde, dan wordt de sensor onbeschikbaar in plaats van een onzinnige waarde te tonen.",
-          "nan_as_zero": "Alleen van toepassing samen met een schaalfactor-register. Staat deze aan, dan levert een SunSpec 'niet beschikbaar'-sentinelwaarde op één van beide registers 0 op in plaats van dat de sensor onbeschikbaar wordt — handig voor een grootheid als stroom of vermogen die écht nul is als het apparaat stilstaat (bijvoorbeeld een omvormer 's nachts), in plaats van werkelijk onbekend.",
+          "scale_factor_address": "Optioneel. Voor SunSpec-achtige apparaten die de echte vermenigvuldiger in een los register opslaan (bijvoorbeeld een bijbehorend '... schaalfactor'-register, altijd een signed 16-bit waarde). Indien ingevuld wordt de uiteindelijke waarde: ruwe waarde × vermenigvuldiger × 10^(waarde van het schaalfactor-register) + offset. Het schaalfactor-register wordt elke keer meegelezen, maar nooit als eigen entiteit getoond. Laat op 0 staan om dit uit te schakelen. Geeft één van beide registers een SunSpec 'niet beschikbaar'-sentinelwaarde, dan wordt die uitlezing genegeerd en blijft de laatste goede waarde zichtbaar in plaats van een onzinnige waarde (een schaalfactor buiten -10..10 wordt ook genegeerd). Waarde en schaalfactor worden in één verzoek gelezen als de adressen dicht bij elkaar liggen.",
+          "nan_as_zero": "Alleen van toepassing samen met een schaalfactor-register. Staat deze aan, dan levert een SunSpec 'niet beschikbaar'-sentinelwaarde op één van beide registers 0 op in plaats van de laatste waarde vast te houden — handig voor een grootheid als stroom of vermogen die écht nul is als het apparaat stilstaat (bijvoorbeeld een omvormer 's nachts), in plaats van werkelijk onbekend.",
           "register_type": "Een Number kan alleen een Holding register zijn.",
           "data_type": "Bij tekst gelden byte-volgorde, vermenigvuldiger, offset, eenheid en klassen niet.",
           "entity_category": "Diagnostiek- en configuratie-entiteiten staan op de apparaatpagina in een eigen groep en worden niet automatisch op dashboards getoond. 'Configuratie' kan alleen bij een Number.",
@@ -162,7 +166,7 @@
           "on_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
           "off_value": "Alleen voor Switch. De ruwe registerwaarde die 'aan' betekent, en die welke 'uit' betekent. Standaard 1/0; sommige apparaten gebruiken andere codes (bijvoorbeeld 0x000A/0x0005).",
           "string_length": "Alleen bij datatype 'Tekst / String'. Aantal registers dat deze tekst inneemt (1-125), bijvoorbeeld 7 voor een 14-tekens versienummer, of 16/32 voor de vroegere vaste SunSpec-lengtes.",
-          "valid_min": "Alleen voor Sensor. Een uitlezing onder deze waarde wordt als foute data afgewezen: de vorige waarde blijft een paar polls staan, daarna wordt de sensor onbeschikbaar. Leeg laten = uit. Niet hetzelfde als 'Minimum' (alleen Number).",
+          "valid_min": "Alleen voor Sensor. Een uitlezing onder deze waarde wordt als foute data afgewezen: de laatste goede waarde blijft zichtbaar tot er weer een geldige uitlezing is. Leeg laten = uit. Niet hetzelfde als 'Minimum' (alleen Number).",
           "valid_max": "Alleen voor Sensor. Een uitlezing boven deze waarde wordt als foute data afgewezen (zie plausibel minimum), bijvoorbeeld 100 voor een dagteller in kWh. Leeg laten = uit. Niet hetzelfde als 'Maximum' (alleen Number)."
         }
       },

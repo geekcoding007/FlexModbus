@@ -22,6 +22,7 @@ CONF_REQUEST_DELAY = "request_delay_ms"
 CONF_PERSISTENT_CONNECTION = "persistent_connection"
 CONF_IDLE_CLOSE_SECONDS = "idle_close_seconds"
 CONF_SUPPRESS_LOG_NOISE = "suppress_log_noise"
+CONF_SUNSPEC_DEVICE = "sunspec_device"
 CONF_ENTITY_CATEGORY = "entity_category"
 CONF_VALUE_MAP = "value_map"
 CONF_BIT_LABELS = "bit_labels"
@@ -99,5 +100,10 @@ SCAN_INTERVAL = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
 OFFLINE_INTERVAL = timedelta(seconds=60)
 MAX_TOLERATED_MISSES = 2
 SILENCE_ABORT_AFTER = 3
+# Waarde en schaalfactor worden in een verzoek gelezen als ze samen binnen dit aantal registers liggen
+MAX_COMBINED_READ_SPAN = 16
+# SunSpec: een schaalfactor ligt altijd tussen -10 en 10
+SUNSPEC_SF_MIN = -10
+SUNSPEC_SF_MAX = 10
 REQUEST_DELAY = 0.35
 CONNECT_TIMEOUT = 4.0

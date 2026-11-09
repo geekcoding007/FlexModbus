@@ -195,6 +195,15 @@ class RegisterDef:
         return self.entity_type == ENTITY_SWITCH
 
     @property
+    def is_plain_numeric_sensor(self) -> bool:
+        return (
+            self.entity_type == ENTITY_SENSOR
+            and not is_string_type(self.data_type)
+            and not self.value_map
+            and not self.bit_labels
+        )
+
+    @property
     def has_scale_factor(self) -> bool:
         return self.scale_factor_address is not None
 
